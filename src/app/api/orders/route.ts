@@ -110,6 +110,7 @@ export async function GET(req: NextRequest) {
             oi.id,
             oi.order_id,
             oi.product_id,
+            oi.seller_id,
             oi.price_at_order,
             oi.quantity,
             oi.subtotal,
@@ -483,11 +484,12 @@ export async function POST(req: NextRequest) {
           `INSERT INTO order_items (
             order_id,
             product_id,
+            seller_id,
             price_at_order,
             quantity,
             subtotal
           ) VALUES (?, ?, ?, ?, ?)`,
-          [orderId, productId, product.name, price, quantity, subtotal]
+          [orderId, productId, product.seller_id, price, quantity, subtotal]
         );
 
         if (product.status === 'pre_order') {
