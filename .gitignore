@@ -1,0 +1,13 @@
+﻿node_modules
+.42c
+.backup
+.vscode
+.next
+.env.local
+.env
+package.json
+server.js
+.env prod
+ecommerce_db 4-7-2026.sql
+scripts
+Agri-X.zip
