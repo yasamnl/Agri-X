@@ -79,7 +79,7 @@ const [orders] = await pool.execute(
   transaction_status === 'capture'
 ) {
   paymentStatus = transaction_status;
-  orderStatus = 'shipped';
+  orderStatus = 'processing';
 }
 
     // ✅ 4. Update payments table with ACTUAL payment method from Midtrans (source of truth)

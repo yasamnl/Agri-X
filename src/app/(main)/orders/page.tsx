@@ -47,6 +47,14 @@ const statusConfig: Record<string, {
     bg: 'bg-blue-100',
     icon: Truck,
   },
+
+  processing: {
+  label: 'Dikemas',
+  color: 'text-blue-600',
+  bg: 'bg-blue-100',
+  icon: Package,
+},
+
   delivered: {
     label: 'Diterima',
     color: 'text-purple-600',
@@ -71,6 +79,7 @@ const statusConfig: Record<string, {
 const orderTabs = [
   { id: 'all', label: 'Semua' },
   { id: 'pending', label: 'Belum Bayar' },
+  { id: 'processing', label: 'Dikemas' },
   { id: 'paid', label: 'Dibayar' },
   { id: 'shipped', label: 'Dikirim' },
   { id: 'delivered', label: 'Diterima' },

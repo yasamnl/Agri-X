@@ -167,16 +167,16 @@ if (process.env.NODE_ENV === 'development') console.log(
 
       // Cek Status Pembayaran dari Database
       // Status 'settlement' atau 'capture' artinya LUNAS
-      if (order.payment_status === 'settlement' || order.payment_status === 'capture' || order.status === 'paid') {
+      if (order.paymentStatus === 'settlement' || order.paymentStatus === 'capture' || order.status === 'paid') {
         setUiStatus('success');
-        setMessage('Pembayaran Berhasil! Pesanan Anda sedang diproses.');
+        setMessage('Pembayaran Berhasil! Pesanan Anda sedang dikemas.');
         
         // Redirect ke halaman sukses setelah 2 detik
         setTimeout(() => {
           router.push(`/orders/${orderId}`);
         }, 2500);
 
-      } else if (order.payment_status === 'pending') {
+      } else if (order.paymentStatus === 'pending') {
         setUiStatus('pending');
         setMessage('Menunggu Pembayaran. Silakan selesaikan transfer Anda.');
       } else {
@@ -215,30 +215,61 @@ if (process.env.NODE_ENV === 'development') console.log(
         );
 
       case 'pending':
-        return (
-          <div className="flex flex-col items-center justify-center space-y-4 w-full">
-            <div className="p-4 bg-yellow-100 rounded-full">
-              <Clock className="w-16 h-16 text-yellow-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-yellow-600">Menunggu Pembayaran</h2>
-            <p className="text-text-secondary text-center max-w-xs">{message}</p>
-            <div
-                style={{
-                  width: '450px',
-                  maxWidth: '100%',
-                }}
-                className="mt-4 p-4 bg-surface border border-border rounded-lg"
-              >
-              <p className="text-sm text-text-secondary mb-2">Silakan cek email atau halaman Virtual Account Anda untuk instruksi pembayaran.</p>
-              <button
-          onClick={handlePayNow}
-         className="btn-primary w-full mt-2"
-         >
-        Bayar Sekarang
-        </button>
-            </div>
+  return (
+    <div className="flex flex-col items-center justify-center space-y-4 w-full">
+
+      <div className="p-4 bg-yellow-100 rounded-full">
+        <Clock className="w-16 h-16 text-yellow-600" />
+      </div>
+
+      <h2 className="text-2xl font-bold text-yellow-600">
+        Menunggu Pembayaran
+      </h2>
+
+      <p className="text-text-secondary text-center max-w-md">
+        Silakan selesaikan pembayaran sebelum batas waktu berakhir.
+      </p>
+
+      <div
+        style={{
+          width: '500px',
+          maxWidth: '100%',
+        }}
+        className="mt-4 p-6 bg-surface border border-border rounded-xl space-y-4"
+      >
+
+        <div className="text-left space-y-2">
+
+          <div className="flex justify-between">
+            <span className="text-text-secondary">
+              Total Pembayaran
+            </span>
+
+            <span className="font-bold text-primary">
+              Rp {Number(order?.grandTotal || 0).toLocaleString('id-ID')}
+            </span>
           </div>
-        );
+
+        </div>
+
+        <button
+          onClick={handlePayNow}
+          className="btn-primary w-full"
+        >
+          Bayar Sekarang
+        </button>
+
+        <button
+          onClick={() => router.push('/orders')}
+          className="btn-outline w-full"
+        >
+          Bayar Nanti
+        </button>
+
+      </div>
+
+    </div>
+  );
 
       case 'failed':
         return (

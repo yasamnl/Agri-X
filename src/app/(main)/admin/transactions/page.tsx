@@ -81,7 +81,7 @@ interface Summary {
 const STATUS_OPTIONS = [
   { value: 'all', label: 'Semua', color: 'bg-gray-500', icon: Package },
   { value: 'pending', label: 'Pending', color: 'bg-yellow-500', icon: Clock },
-  { value: 'processing', label: 'Diproses', color: 'bg-blue-500', icon: Package },
+  { value: 'processing', label: 'Dikemas', color: 'bg-blue-500', icon: Package },
   { value: 'shipped', label: 'Dikirim', color: 'bg-purple-500', icon: Truck },
   { value: 'completed', label: 'Selesai', color: 'bg-green-500', icon: CheckCircle },
   { value: 'cancelled', label: 'Dibatalkan', color: 'bg-red-500', icon: XCircle },
@@ -110,7 +110,7 @@ const getStatusBadge = (status: string) => {
     processing: { 
       className: 'badge badge-processing',
       icon: Package,
-      label: 'Diproses'
+      label: 'Dikemas'
     },
     shipped: { 
       className: 'badge badge-shipped',

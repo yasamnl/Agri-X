@@ -48,12 +48,23 @@ export async function GET(req: NextRequest) {
     // 3. BUILD QUERY
     // ============================================
     let statusFilter = '';
-    const params: any[] = [sellerId];
+const params: any[] = [sellerId];
 
-    if (status !== 'all') {
-      statusFilter = ' AND o.status = ?';
-      params.push(status);
-    }
+if (status !== 'all') {
+
+  // Pesanan Baru dan Dikemas sama-sama mengambil status processing
+  if (status === 'packing' || status === 'processing') {
+
+    statusFilter = ' AND o.status = ?';
+    params.push('processing');
+
+  } else {
+
+    statusFilter = ' AND o.status = ?';
+    params.push(status);
+
+  }
+}
 
     // ============================================
     // 4. FETCH ORDERS

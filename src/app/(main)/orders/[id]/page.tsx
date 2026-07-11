@@ -110,7 +110,7 @@ const STATUS_CONFIG: Record<string, {
     color: 'text-purple-700 dark:text-purple-300',
     bg: 'bg-purple-50 dark:bg-purple-900/20',
     border: 'border-purple-200 dark:border-purple-800',
-    label: 'Sedang Diproses',
+    label: 'Sedang Dikemas',
   },
   shipped: {
     icon: Truck,
@@ -120,12 +120,12 @@ const STATUS_CONFIG: Record<string, {
     label: 'Dikirim',
   },
   delivered: {
-    icon: CheckCircle,
+    icon: Package,
     color: 'text-green-700 dark:text-green-300',
     bg: 'bg-green-50 dark:bg-green-900/20',
     border: 'border-green-200 dark:border-green-800',
-    label: 'Sudah Diterima',
-  },
+    label: 'Barang Telah Sampai',
+},
   completed: {
     icon: CheckCircle,
     color: 'text-primary',
@@ -685,14 +685,14 @@ export default function OrderDetailPage() {
                 )}
 
                 {order.status === 'delivered' && (
-                  <button
-                    onClick={handleConfirmReceived}
-                    className="btn-primary w-full flex items-center justify-center gap-2"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    Konfirmasi Diterima
-                  </button>
-                )}
+  <button
+    onClick={handleConfirmReceived}
+    className="btn-primary w-full flex items-center justify-center gap-2"
+  >
+    <CheckCircle className="w-4 h-4" />
+    Konfirmasi Pesanan Diterima
+  </button>
+)}
 
                 {['pending_payment', 'paid', 'processing'].includes(order.status) && (
                   <button
@@ -704,7 +704,7 @@ export default function OrderDetailPage() {
                   </button>
                 )}
 
-                {order.status === 'shipped' && order.trackingNumber && (
+                {['shipped', 'delivered'].includes(order.status) && (
                   <button
                     onClick={() => {
                       const el = document.querySelector('[data-tracking-section]');

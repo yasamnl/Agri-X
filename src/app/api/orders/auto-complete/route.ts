@@ -7,8 +7,8 @@ export async function GET() {
       UPDATE orders
       SET status = 'completed',
           updated_at = NOW()
-      WHERE status = 'shipped'
-      AND shipped_at <= DATE_SUB(NOW(), INTERVAL 3 DAY)
+      WHERE status = 'delivered'
+      AND delivered_at <= DATE_SUB(NOW(), INTERVAL 3 DAY)
     `);
 
     return NextResponse.json({
