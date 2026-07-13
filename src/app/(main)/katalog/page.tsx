@@ -132,7 +132,6 @@ export default function KatalogPage() {
   const [totalProducts, setTotalProducts] = useState(0);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
   // Modal State
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -385,7 +384,6 @@ export default function KatalogPage() {
   // ============================================
   // RENDER
   // ============================================
-
   return (
     <div className="animate-fade-in min-h-screen pb-20">
       {/* Header */}

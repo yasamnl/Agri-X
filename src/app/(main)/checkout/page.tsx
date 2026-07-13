@@ -7,8 +7,6 @@ import {
   Wallet, Plus, Loader2, CheckCircle, AlertCircle, Edit2, Trash2, Check, X, Star  
 } from 'lucide-react';
 import PaymentModal from '@/components/payment/PaymentModal';
-import { useCart } from '@/context/CartContext';
-import { getStoredReferralCode } from '@/lib/referral';
 
 // Helper: Read cookie
 const getCookie = (name: string): string | null => {
@@ -118,8 +116,6 @@ export default function CheckoutPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   
-  const referralCode = getStoredReferralCode();
-
   // Payment Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [snapToken] = useState('');
@@ -337,7 +333,6 @@ export default function CheckoutPage() {
         recipientName: addressForm.recipientName.trim(),
         recipientPhone: addressForm.recipientPhone.trim(),
         isDefault: editingAddressId === null,
-        referralCode: referralCode || undefined,
       };
 
       const res = await fetch(url, {
@@ -858,7 +853,7 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-text-primary mb-2">No. Telepon <span className="text-red-500">*</span></label>
-                    <input type="tel" value={addressForm.recipientPhone} onChange={(e) => setAddressForm({ ...addressForm, recipientPhone: e.target.value })} placeholder="087890" className="input" required />
+                    <input type="tel" value={addressForm.recipientPhone} onChange={(e) => setAddressForm({ ...addressForm, recipientPhone: e.target.value })} placeholder="081234567890" className="input" required />
                   </div>
                 </div>
 

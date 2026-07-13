@@ -12,7 +12,6 @@ export async function GET(req: NextRequest) {
 
     const token = authHeader.split(' ')[1];
     const decoded = verifyAccessToken(token);
-
     if (!decoded || decoded.role !== 'admin') {
       return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
     }

@@ -1,8 +1,6 @@
 // next.config.ts
 import type { NextConfig } from 'next';
 
-// const LARAVEL_URL = process.env.LARAVEL_URL || 'http://localhost:8000';
-
 const nextConfig: NextConfig = {
   // ✅ IZINKAN AKSES DARI JARINGAN LOKAL (Development Only)
   allowedDevOrigins: [
@@ -120,28 +118,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   trailingSlash: false,
   compress: true,
-
-  // ✅ PROXY KE LARAVEL — fitur Affiliate Program (masih dilayani Laravel)
-  // Browser tetap lihat domain Node, tapi konten/AJAX-nya ditembusin ke Laravel.
-  // async rewrites() {
-  //   return [
-  //     // Halaman pendaftaran affiliate
-  //     { source: '/daftar-affiliate', destination: `${LARAVEL_URL}/daftar-affiliate` },
-
-  //     // Semua AJAX yang dipanggil daftar-affiliate.js:
-  //     //   POST /affiliate/daftar
-  //     //   POST /affiliate/sosmed/request-verification
-  //     //   POST /affiliate/check-verification-status
-  //     //   GET  /affiliate/verify-sosmed
-  //     //   GET  /affiliate/sosmed/verify/result
-  //     { source: '/affiliate/:path*', destination: `${LARAVEL_URL}/affiliate/:path*` },
-
-  //     // Asset yang dipakai halaman ini
-  //     { source: '/css/daftar-affiliate.css', destination: `${LARAVEL_URL}/css/daftar-affiliate.css` },
-  //     { source: '/js/daftar-affiliate.js', destination: `${LARAVEL_URL}/js/daftar-affiliate.js` },
-  //     { source: '/images/Agri-XLogo.png', destination: `${LARAVEL_URL}/images/Agri-XLogo.png` },
-  //   ];
-  // },
 };
 
 export default nextConfig;

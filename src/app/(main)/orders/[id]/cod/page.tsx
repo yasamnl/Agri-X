@@ -273,7 +273,7 @@ export default function CodPaymentPage() {
             Butuh bantuan dengan pesanan ini?
           </p>
           <a 
-            href="https://wa.me/6287890" 
+            href="https://wa.me/6281234567890" 
             target="_blank" 
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-primary font-medium hover:underline"

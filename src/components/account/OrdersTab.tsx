@@ -15,10 +15,18 @@ interface OrdersTabProps {
   isSeller?: boolean;
 }
 
-const ORDER_TABS = [
+const BUYER_TABS = [
   { id: 'all', label: 'Semua', icon: Package },
-  { id: 'pending', label: 'Menunggu', icon: Clock },
-  { id: 'processing', label: 'Diproses', icon: Loader2 },
+  { id: 'pending_payment', label: 'Belum Bayar', icon: Clock },
+  { id: 'processing', label: 'Dikemas', icon: Loader2 },
+  { id: 'shipped', label: 'Dikirim', icon: Truck },
+  { id: 'delivered', label: 'Sampai', icon: Package },
+  { id: 'completed', label: 'Selesai', icon: CheckCircle },
+];
+
+const SELLER_TABS = [
+  { id: 'processing', label: 'Pesanan Baru', icon: Clock },
+  { id: 'packing', label: 'Dikemas', icon: Loader2 },
   { id: 'shipped', label: 'Dikirim', icon: Truck },
   { id: 'completed', label: 'Selesai', icon: CheckCircle },
 ];
@@ -82,6 +90,7 @@ export function OrdersTab({ userId, isSeller = false }: OrdersTabProps) {
   const [isLoading, setIsLoading] = react.useState(true);
   const [orderFilter, setOrderFilter] = react.useState('all');
   const [error, setError] = react.useState<string | null>(null);
+  const tabs = isSeller ? SELLER_TABS : BUYER_TABS;
 
   react.useEffect(() => {
     if (userId) fetchOrders();
@@ -154,7 +163,7 @@ export function OrdersTab({ userId, isSeller = false }: OrdersTabProps) {
     <div className="space-y-4">
       {/* Filter Tabs */}
       <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
-        {ORDER_TABS.map((tab) => {
+        {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
             <button
@@ -197,7 +206,7 @@ export function OrdersTab({ userId, isSeller = false }: OrdersTabProps) {
         <div className="card text-center py-16">
           <Package className="w-16 h-16 mx-auto text-text-muted mb-4" />
           <p className="text-text-secondary font-medium">
-            {orderFilter === 'all' ? 'Belum ada pesanan' : `Tidak ada pesanan ${orderFilter}`}
+            orderFilter === 'all' ? 'Belum ada pesanan': `Tidak ada pesanan ${tabs.find(t => t.id === orderFilter)?.label}`
           </p>
           <button onClick={() => router.push('/katalog')} className="btn-primary mt-4">
             Mulai Belanja
@@ -259,24 +268,120 @@ export function OrdersTab({ userId, isSeller = false }: OrdersTabProps) {
                     {formatCurrency(safeNumber(order.grandTotal))}
                   </p>
                 </div>
-                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                  {order.status === 'pending' && order.paymentMethod !== 'cod' && (
-                    <button
-                      className="btn-primary px-4 py-2 text-sm flex items-center gap-1"
-                      onClick={() => router.push(`/orders/${order.orderId || order.id}/pay`)}
-                    >
-                      <CreditCard className="w-4 h-4" />
-                      Bayar
-                    </button>
-                  )}
-                  <button
-                    className="btn-outline px-4 py-2 text-sm flex items-center gap-1"
-                    onClick={() => router.push(`/orders/${order.orderId || order.id}`)}
-                  >
-                    Detail
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
+                <div className="flex gap-2">
+
+  {isSeller ? (
+
+  <>
+    {order.status === "processing" && (
+      <button
+        className="btn-primary px-4 py-2"
+        onClick={async (e) => {
+          e.stopPropagation();
+
+          try {
+            const token = getCookie("accessToken");
+
+            const res = await fetch(
+              `/api/seller/orders/${order.id}/ship`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  courierCode: "jne",
+                  courierName: "JNE",
+                  trackingNumber: `AGRIX${Date.now()}`,
+                }),
+              }
+            );
+
+            const data = await res.json();
+
+            if (!res.ok) {
+              throw new Error(data.error || "Gagal mengirim pesanan");
+            }
+
+            toast.success("Pesanan berhasil dikirim");
+            fetchOrders();
+
+          } catch (err: any) {
+            toast.error(err.message);
+          }
+        }}
+      >
+        Konfirmasi Pengiriman
+      </button>
+    )}
+
+    {order.status === "shipped" && (
+      <button
+        className="btn-primary px-4 py-2"
+        onClick={async (e) => {
+          e.stopPropagation();
+
+          try {
+            const token = getCookie("accessToken");
+
+            const res = await fetch(
+              `/api/seller/orders/${order.id}/delivered`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+            const data = await res.json();
+
+            if (!res.ok) {
+              throw new Error(data.error || "Gagal mengubah status");
+            }
+
+            toast.success("Barang berhasil dikonfirmasi sampai");
+            fetchOrders();
+
+          } catch (err: any) {
+            toast.error(err.message);
+          }
+        }}
+      >
+        Konfirmasi Barang Sampai
+      </button>
+    )}
+  </>
+
+) : (
+
+    <>
+      {order.status === "pending_payment" &&
+ order.paymentMethod !== "cod" && (
+          <button
+            className="btn-primary px-4 py-2"
+            onClick={() =>
+              router.push(`/orders/${order.orderId || order.id}/pay`)
+            }
+          >
+            Bayar
+          </button>
+      )}
+
+      <button
+        className="btn-outline px-4 py-2"
+        onClick={() =>
+          router.push(`/orders/${order.orderId || order.id}`)
+        }
+      >
+        Detail
+      </button>
+    </>
+
+  )}
+
+</div>
               </div>
             </div>
           ))}
