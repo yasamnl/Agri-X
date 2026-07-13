@@ -359,6 +359,7 @@ export function OrdersTab({ userId, isSeller = false }: OrdersTabProps) {
     <>
       {order.status === "pending_payment" &&
  order.paymentMethod !== "cod" && (
+
           <button
             className="btn-primary px-4 py-2"
             onClick={() =>
@@ -369,6 +370,43 @@ export function OrdersTab({ userId, isSeller = false }: OrdersTabProps) {
           </button>
       )}
 
+      {order.status === "delivered" && (
+  <button
+    className="btn-primary px-4 py-2"
+    onClick={async (e) => {
+      e.stopPropagation();
+
+      try {
+        const token = getCookie("accessToken");
+
+        const res = await fetch(
+          `/api/orders/${order.id}/complete`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Gagal mengonfirmasi pesanan");
+        }
+
+        toast.success("Pesanan berhasil diselesaikan");
+        fetchOrders();
+
+      } catch (err: any) {
+        toast.error(err.message);
+      }
+    }}
+  >
+    Konfirmasi Pesanan Diterima
+  </button>
+)}
+
       <button
         className="btn-outline px-4 py-2"
         onClick={() =>
@@ -377,6 +415,8 @@ export function OrdersTab({ userId, isSeller = false }: OrdersTabProps) {
       >
         Detail
       </button>
+
+      
     </>
 
   )}
