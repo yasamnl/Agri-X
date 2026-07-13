@@ -1,0 +1,968 @@
+:root {
+    /* Primary Colors */
+    --color-primary: #166534;
+    --color-primary-light: #22c55e;
+    --color-primary-dark: #14532d;
+    --color-primary-gradient: linear-gradient(135deg, #166534 0%, #22c55e 100%);
+    
+    /* Secondary Colors */
+    --color-secondary: #22c55e;
+    --color-secondary-light: #4ade80;
+    
+    /* Background Colors */
+    --color-background: #FFFFFF;
+    --color-background-alt: #F0FDF4;
+    --color-background-dark: #0F1F14;
+    
+    /* Surface Colors */
+    --color-surface: #F0FDF4;
+    --color-surface-hover: #DCFCE7;
+    --color-surface-dark: #1A2F1E;
+    
+    /* Text Colors */
+    --color-text-primary: #1C1917;
+    --color-text-secondary: #78716C;
+    --color-text-muted: #A8A29E;
+    --color-text-primary-dark: #FFFFFF;
+    --color-text-secondary-dark: #D6D3D1;
+    
+    /* Border Colors */
+    --color-border: #E5E7EB;
+    --color-border-light: #F3F4F6;
+    --color-border-dark: #374151;
+    
+    /* Status Colors */
+    --color-success: #22c55e;
+    --color-warning: #eab308;
+    --color-danger: #ef4444;
+    --color-info: #3b82f6;
+  
+    /* Form token shortcut untuk kemudahan maintenance */
+    --bg: var(--color-background);
+    --card-bg: var(--color-background-alt);
+    --card-border: var(--color-border);
+    --accent: var(--color-primary);
+    --text-primary: var(--color-text-primary);
+    --text-secondary: var(--color-text-secondary);
+    --text-muted: var(--color-text-primary); /* Disesuaikan agar kontras teks label terbaca */
+    --input-bg: var(--color-background);
+    --radius: 12px;
+  }
+  
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* ── HEADER ── */
+  .header {
+    width: 100%;
+    background: var(--color-primary);
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    height: 85px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 2px 20px rgba(22, 101, 52, 0.15); /* Diubah ke bayangan hijau lembut */
+  }
+  
+  .header-logo {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text-primary-dark);
+    letter-spacing: .4px;
+  }
+  
+  .header-logo span {
+    color: var(--color-primary-light);
+  }
+  
+  .page-wrap {
+    width: 100%;
+    max-width: 640px;
+    padding: 48px 20px 80px;
+  }
+  
+  /* ── PAGE TITLE ── */
+  .page-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--color-primary-dark);
+    margin-bottom: 44px;
+  }
+  
+  /* ── SECTION ── */
+  .section {
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    padding-top: 20px;
+  }
+  
+  .field-label {
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+  }
+  
+  /* ── INPUT ── */
+  .input {
+    width: 100%;
+    padding: 11px 14px;
+    background: var(--input-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: .9rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  
+  .input::placeholder {
+    color: var(--color-text-muted);
+  }
+  
+  .input:focus {
+    border-color: var(--color-primary-light);
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, .15);
+  }
+  
+  .input.error {
+    border-color: var(--color-danger);
+  }
+  
+  .error-msg {
+    font-size: .75rem;
+    color: var(--color-danger);
+    margin-top: 5px;
+    display: none;
+  }
+  
+  .error-msg.show {
+    display: block;
+  }
+  
+  /* ── INFO CARD (penjelasan sosmed) ── */
+  .info-card {
+    background: var(--card-bg);
+    border: 1px solid var(--color-surface-hover);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+  
+  .info-card h2 {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    margin-bottom: 10px;
+  }
+  
+  .info-card p {
+    font-size: .875rem;
+    color: var(--text-secondary);
+    line-height: 1.75;
+    margin-bottom: 20px;
+  }
+    
+  .sosmed-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--color-background);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    animation: fadeIn .22s ease;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .sosmed-platform-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .7rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  
+  .icon-instagram { background: rgba(255, 101, 132, .15); color: #ff6584; }
+  .icon-tiktok { background: rgba(15, 31, 20, .1); color: var(--color-background-dark); }
+  .icon-youtube { background: rgba(239, 68, 68, .15); color: var(--color-danger); }
+  .icon-twitter { background: rgba(59, 130, 246, .15); color: var(--color-info); }
+  .icon-facebook { background: rgba(59, 130, 246, .2); color: #3b82f6; }
+  .icon-lainnya { background: rgba(120, 113, 108, .15); color: var(--color-text-secondary); }
+  
+  .sosmed-info {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .sosmed-platform {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: 1px;
+  }
+  
+  .sosmed-link {
+    font-size: .85rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .btn-hapus {
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: color .15s, background .15s;
+    flex-shrink: 0;
+  }
+  
+  .btn-hapus:hover {
+    color: var(--color-danger);
+    background: rgba(239, 68, 68, .1);
+  }
+  
+  /* ── TAMBAHKAN BUTTON ── */
+  .btn-tambah {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 16px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-secondary-light);
+    border-radius: 10px;
+    color: var(--color-primary);
+    font-size: .85rem;
+    font-weight: 600;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  
+  .btn-tambah:hover {
+    background: var(--color-surface-hover);
+    border-color: var(--color-primary);
+  }
+  
+/* ── CHECKBOX SYARAT ── */
+.syarat-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 18px;
+    background: var(--color-background-alt);
+    border: 1px solid var(--color-surface-hover);
+    border-radius: 12px;
+    margin-bottom: 28px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  
+  .syarat-wrap:hover {
+    border-color: var(--color-primary-light);
+  }
+  
+  .syarat-wrap.checked {
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+  }
+  
+  .checkbox-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 2px solid var(--color-border);
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  
+  /* Saat checkbox aktif (checked) */
+  .checkbox-box.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+  
+  .checkbox-check {
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  
+  .checkbox-box.active .checkbox-check {
+    opacity: 1;
+  }
+  
+  .syarat-text {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+    flex: 1;
+  }
+  
+  .syarat-text a {
+    color: var(--color-primary-light);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  
+  .syarat-text a:hover {
+    text-decoration: underline;
+    color: var(--color-primary);
+  }
+
+  /* ── SUBMIT BUTTON ── */
+  .btn-submit {
+    width: 100%;
+    padding: 13px;
+    background: var(--color-primary-gradient);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: .95rem;
+    font-weight: 700;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    cursor: pointer;
+    transition: opacity .2s, transform .15s;
+    letter-spacing: .3px;
+    box-shadow: 0 4px 12px rgba(22, 101, 52, 0.2);
+  }
+  
+  .btn-submit:hover {
+    opacity: .92;
+    transform: translateY(-1px);
+  }
+  
+  .btn-submit:active {
+    transform: translateY(0);
+  }
+  
+  .btn-submit:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* ── MODAL TAMBAH SOSMED ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 31, 20, .65); /* Diubah ke backdrop hijau gelap transparan */
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .modal-overlay.open {
+    display: flex;
+  }
+  
+  .modal {
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    padding: 28px;
+    width: 90%;
+    max-width: 380px;
+    animation: modalIn .22s ease;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  }
+  
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(.93) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  
+  .modal-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    margin-bottom: 6px;
+  }
+  
+  .modal-subtitle {
+    font-size: .82rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 20px;
+  }
+  
+  /* Platform pilih */
+  .platform-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  
+  .platform-opt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 6px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: all .15s;
+    background: var(--color-background-alt);
+  }
+  
+  .platform-opt:hover {
+    border-color: var(--color-primary-light);
+    background: var(--color-surface-hover);
+  }
+  
+  .platform-opt.selected {
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+  }
+  
+  .platform-opt-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .68rem;
+    font-weight: 700;
+  }
+  
+  .platform-opt-label {
+    font-size: .72rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+  }
+  
+  .platform-opt.selected .platform-opt-label {
+    color: var(--color-primary-dark);
+    font-weight: 700;
+  }
+  
+  .modal-field {
+    margin-bottom: 16px;
+  }
+  
+  .modal-field-label {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    margin-bottom: 7px;
+  }
+  
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  
+  .btn-batal {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    font-size: .875rem;
+    font-weight: 600;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  
+  .btn-batal:hover {
+    background: var(--color-border-light);
+  }
+  
+  .btn-konfirmasi {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    background: var(--color-primary);
+    border: none;
+    color: #fff;
+    font-size: .875rem;
+    font-weight: 700;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  
+  .btn-konfirmasi:hover {
+    opacity: .9;
+  }
+  
+  .btn-konfirmasi:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+  }
+  
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--color-surface-dark);
+    border: 1px solid var(--color-primary-dark);
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-size: .855rem;
+    color: var(--color-text-primary-dark);
+    opacity: 0;
+    transition: all .3s;
+    z-index: 300;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 8px 30px rgba(15, 31, 20, 0.3);
+  }
+  
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  
+  /* ── MODAL SUKSES ── */
+  .modal-sukses {
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 24px;
+    padding: 40px 32px 32px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    animation: modalIn .28s ease;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  }
+  
+  .sukses-icon-wrap {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--color-surface);
+    border: 2px solid var(--color-secondary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    animation: popIn .4s cubic-bezier(.34, 1.56, .64, 1);
+    color: var(--color-success);
+  }
+  
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(.5); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  .sukses-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    margin-bottom: 10px;
+  }
+  
+  .sukses-desc {
+    font-size: .875rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 28px;
+  }
+  
+  .sukses-detail {
+    background: var(--color-background-alt);
+    border: 1px solid var(--color-surface-hover);
+    border-radius: 12px;
+    padding: 14px 16px;
+    text-align: left;
+    margin-bottom: 24px;
+  }
+  
+  .sukses-detail-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--color-border-light);
+    font-size: .82rem;
+  }
+  
+  .sukses-detail-row:last-child {
+    border-bottom: none;
+  }
+  
+  .sukses-detail-label {
+    color: var(--color-text-secondary);
+    min-width: 80px;
+  }
+  
+  .sukses-detail-val {
+    color: var(--color-text-primary);
+    font-weight: 500;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .sukses-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 26px;
+    text-align: left;
+  }
+  
+  .sukses-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: .82rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  
+  .step-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-surface);
+    color: var(--color-primary);
+    font-size: .72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  
+  .btn-sukses-close {
+    width: 100%;
+    padding: 12px;
+    background: var(--color-primary);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: .9rem;
+    font-weight: 700;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  
+  .btn-sukses-close:hover {
+    background: var(--color-primary-dark);
+  }
+  
+  .terms-modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.45);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+  }
+  
+  .terms-modal.show{
+    display:flex;
+  }
+  
+  .terms-modal-box{
+    width:850px;
+    max-width:95%;
+    max-height:85vh;
+    background:#fff;
+    border-radius:10px;
+    overflow:hidden;
+  }
+  
+  .tab-header{
+    display:flex;
+    border-bottom:1px solid #ddd;
+  }
+  
+  .tab-btn{
+    flex:1;
+    padding:15px;
+    background:#f5f5f5;
+    border:none;
+    cursor:pointer;
+    font-weight:600;
+  }
+  
+  .tab-btn.active{
+    background:#fff;
+    border-bottom:3px solid #3b82f6;
+  }
+  
+  .tab-content{
+    display:none;
+    padding:20px;
+    height:60vh;
+    overflow-y:auto;
+  }
+  
+  .tab-content.active{
+    display:block;
+  }
+  
+  .terms-modal-footer{
+    padding:15px;
+    text-align:right;
+    border-top:1px solid #ddd;
+  }
+  
+  /* Badge status verifikasi */
+  .badge-verified {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: rgba(67,233,123,.15); color: #43e97b;
+    font-size: .68rem; font-weight: 600; padding: 1px 7px;
+    border-radius: 20px; margin-left: 6px; vertical-align: middle;
+  }
+  .badge-pending-verify {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: rgba(247,151,30,.12); color: #f7971e;
+    font-size: .68rem; font-weight: 600; padding: 1px 7px;
+    border-radius: 20px; margin-left: 6px; vertical-align: middle;
+  }
+  .badge-unverified {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: rgba(239,68,68,.1); color: #ef4444;
+    font-size: .68rem; font-weight: 600; padding: 1px 7px;
+    border-radius: 20px; margin-left: 6px; vertical-align: middle;
+  }
+  
+  /* Item sosmed: glow hijau jika verified */
+  .sosmed-item.sosmed-verified {
+    border-left: 3px solid rgba(67,233,123,.5);
+  }
+  .sosmed-item.sosmed-unverified {
+    border-left: 3px solid rgba(239,68,68,.3);
+    opacity: .92;
+  }
+  
+  /* Hint "cek email" */
+  .sosmed-verify-hint {
+    margin-top: 5px;
+    font-size: .75rem;
+    color: #f7971e;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .btn-resend-token {
+    background: none; border: 1px solid rgba(247,151,30,.4);
+    color: #f7971e; font-size: .72rem; font-weight: 600;
+    padding: 1px 8px; border-radius: 10px; cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-resend-token:hover { background: rgba(247,151,30,.12); }
+  
+  /* Tombol "Kirim link verifikasi ke email" */
+  .sosmed-verify-action { margin-top: 6px; }
+  .btn-verify-now {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.25);
+    color: #818cf8; font-size: .75rem; font-weight: 600;
+    padding: 4px 11px; border-radius: 10px; cursor: pointer;
+    transition: background .2s, color .2s;
+  }
+  .btn-verify-now:hover { background: rgba(99,102,241,.22); color: #a5b4fc; }
+  .btn-verify-now:disabled { opacity: .5; cursor: not-allowed; }
+  
+  /* Hint di bawah tombol submit */
+  .verify-hint-bar {
+    background: rgba(247,151,30,.08);
+    border: 1px solid rgba(247,151,30,.2);
+    color: #f7971e;
+    font-size: .78rem;
+    padding: 9px 14px;
+    border-radius: 10px;
+    margin-top: -6px;
+    margin-bottom: 10px;
+    display: none;
+  }
+
+  /* Sosmed counter */
+.sosmed-counter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--color-primary);
+  font-weight: 600;
+  margin: 12px 0 16px;
+}
+
+/* Daftar akun */
+.sosmed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sosmed-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  transition: all 0.2s;
+}
+
+.sosmed-item.sosmed-verified {
+  border-left: 4px solid #43e97b;
+}
+.sosmed-item.sosmed-unverified {
+  border-left: 4px solid #f7971e;
+}
+
+.sosmed-platform-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.sosmed-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sosmed-platform {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.badge-verified {
+  background: rgba(67, 233, 123, 0.15);
+  color: #43e97b;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 12px;
+}
+
+.badge-unverified {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 12px;
+}
+
+.sosmed-link {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sosmed-verify-action {
+  margin-top: 4px;
+}
+
+.btn-verify-now {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  color: #818cf8;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-verify-now:hover {
+  background: rgba(99, 102, 241, 0.22);
+  color: #a5b4fc;
+}
+.btn-verify-now:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-hapus {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.btn-hapus:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
