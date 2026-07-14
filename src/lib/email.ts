@@ -1,13 +1,13 @@
 // src/lib/email.ts
-import nodemailer from 'nodemailer';
-import type { TransportOptions } from 'nodemailer';
-import path from 'path';
+import nodemailer from "nodemailer";
+import type { TransportOptions } from "nodemailer";
+import path from "path";
 
-// ============================================
 // TRANSPORTER CONFIG
-// ============================================
+// Variabel untuk menyimpan instance transporter agar reusable (singleton pattern) */
 let transporter: nodemailer.Transporter | null = null;
 
+// Mendapatkan transporter email (singleton)
 async function getTransporter() {
   if (transporter) return transporter;
 
@@ -15,17 +15,23 @@ async function getTransporter() {
   const smtpPass = process.env.SMTP_PASS;
 
   // LOGGING: cek apakah environment terbaca
-  console.log('🔍 SMTP_USER:', smtpUser ? '✅ Ada (' + smtpUser + ')' : '❌ Tidak ada');
-  console.log('🔍 SMTP_PASS:', smtpPass ? '✅ Ada (length: ' + smtpPass.length + ')' : '❌ Tidak ada');
-  console.log('🔍 NODE_ENV:', process.env.NODE_ENV);
+  console.log(
+    "🔍 SMTP_USER:",
+    smtpUser ? "✅ Ada (" + smtpUser + ")" : "❌ Tidak ada"
+  );
+  console.log(
+    "🔍 SMTP_PASS:",
+    smtpPass ? "✅ Ada (length: " + smtpPass.length + ")" : "❌ Tidak ada"
+  );
+  console.log("🔍 NODE_ENV:", process.env.NODE_ENV);
 
   // Jika ada kredensial SMTP, gunakan itu (prioritas utama)
   if (smtpUser && smtpPass) {
     try {
       transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        host: process.env.SMTP_HOST || "smtp.gmail.com",
         port: Number(process.env.SMTP_PORT) || 587,
-        secure: process.env.SMTP_SECURE === 'true',
+        secure: process.env.SMTP_SECURE === "true",
         auth: { user: smtpUser, pass: smtpPass },
         timeout: 10000,
         connectionTimeout: 10000,
@@ -34,47 +40,45 @@ async function getTransporter() {
 
       // Verifikasi koneksi
       await transporter.verify();
-      console.log('📧 SMTP ready (Gmail):', smtpUser);
+      console.log("📧 SMTP ready (Gmail):", smtpUser);
       return transporter;
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : String(error);
-      console.error('❌ SMTP connection failed:', errMsg);
+      console.error("❌ SMTP connection failed:", errMsg);
       // Di development, jika SMTP gagal, kita bisa fallback ke Ethereal
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('⚠️  Fallback ke Ethereal karena SMTP gagal.');
+      if (process.env.NODE_ENV === "development") {
+        console.warn("⚠️  Fallback ke Ethereal karena SMTP gagal.");
       } else {
         // Di production, throw error
-        throw new Error('SMTP connection failed: ' + errMsg);
+        throw new Error("SMTP connection failed: " + errMsg);
       }
     }
   }
 
   // Fallback: Ethereal untuk development (jika tidak ada SMTP atau SMTP gagal)
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === "development") {
     try {
       const testAccount = await nodemailer.createTestAccount();
       transporter = nodemailer.createTransport({
-        host: 'smtp.ethereal.email',
+        host: "smtp.ethereal.email",
         port: 587,
         secure: false,
         auth: { user: testAccount.user, pass: testAccount.pass },
         timeout: 5000,
         connectionTimeout: 5000,
       } as TransportOptions);
-      console.log('📧 Ethereal ready:', testAccount.user);
+      console.log("📧 Ethereal ready:", testAccount.user);
       return transporter;
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : String(error);
-      console.error('❌ Failed to create Ethereal account:', errMsg);
-      throw new Error('No email transporter available');
+      console.error("❌ Failed to create Ethereal account:", errMsg);
+      throw new Error("No email transporter available");
     }
   }
 
-  throw new Error('SMTP credentials required in production');
+  throw new Error("SMTP credentials required in production");
 }
 
-// ============================================
-// EMAIL STYLES
 // ============================================
 const emailStyles = `
   body {
@@ -272,9 +276,8 @@ const emailStyles = `
   }
 `;
 
-// ============================================
-// TEMPLATES
-// ============================================
+// TEMPLATE
+// Template email reset password
 const resetPasswordTemplate = (userName: string, resetLink: string) => `
 <!DOCTYPE html>
 <html>
@@ -326,6 +329,7 @@ const resetPasswordTemplate = (userName: string, resetLink: string) => `
 </html>
 `;
 
+// Template email konfirmasi password berhasil diubah
 const passwordChangedTemplate = (userName: string) => `
 <!DOCTYPE html>
 <html>
@@ -347,7 +351,9 @@ const passwordChangedTemplate = (userName: string) => `
       
       <p class="text">
         Halo <strong>${userName}</strong>,<br><br>
-        Password akun Agri X Anda telah berhasil diubah pada ${new Date().toLocaleString('id-ID')}.
+        Password akun Agri X Anda telah berhasil diubah pada ${new Date().toLocaleString(
+          "id-ID"
+        )}.
       </p>
       
       <div class="warning">
@@ -364,6 +370,7 @@ const passwordChangedTemplate = (userName: string) => `
 </html>
 `;
 
+//  Template email verifikasi akun (saat registrasi)
 const accountVerificationTemplate = (userName: string, verifyLink: string) => `
 <!DOCTYPE html>
 <html>
@@ -415,7 +422,12 @@ const accountVerificationTemplate = (userName: string, verifyLink: string) => `
 </html>
 `;
 
-const verificationEmailTemplate = (platform: string, username: string, link: string) => `
+// Template verifikasi akun sosial media (untuk affiliate)
+const verificationEmailTemplate = (
+  platform: string,
+  username: string,
+  link: string
+) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -469,6 +481,7 @@ const verificationEmailTemplate = (platform: string, username: string, link: str
 </html>
 `;
 
+// Template email persetujuan aplikasi affiliate
 const affiliateApprovedTemplate = (userName: string, dashboardLink: string) => `
 <!DOCTYPE html>
 <html>
@@ -516,9 +529,8 @@ const affiliateApprovedTemplate = (userName: string, dashboardLink: string) => `
 </html>
 `;
 
-// ============================================
 // INVOICE TEMPLATE
-// ============================================
+// Template email permintaan reaktivasi akun affiliate (untuk admin)
 const reactivationRequestTemplate = (
   affiliateUserName: string,
   affiliateEmail: string,
@@ -564,6 +576,7 @@ const reactivationRequestTemplate = (
 </html>
 `;
 
+// Template email OTP penarikan komisi
 const withdrawalOtpTemplate = (userName: string, otp: string) => `
 <!DOCTYPE html>
 <html>
@@ -611,10 +624,18 @@ const withdrawalOtpTemplate = (userName: string, otp: string) => `
 </html>
 `;
 
+// Template invoice penarikan komisi
+// Template lengkap dengan header, detail transaksi, dan footer
 const invoiceTemplate = (params: {
   invoiceNumber: string;
   user: { nama_lengkap: string; email: string; no_telp: string };
-  withdrawal: { bank: string; no_rekening: string; nominal: number; status: string; affiliate_application_id: number };
+  withdrawal: {
+    bank: string;
+    no_rekening: string;
+    nominal: number;
+    status: string;
+    affiliate_application_id: number;
+  };
   adminFee: number;
   date: string;
 }) => {
@@ -663,7 +684,7 @@ const invoiceTemplate = (params: {
           </div>
           <div class="invoice-grid-item">
             <label>No. Telepon</label>
-            <div class="value">${user.no_telp || '-'}</div>
+            <div class="value">${user.no_telp || "-"}</div>
           </div>
           <div class="invoice-grid-item">
             <label>Tanggal</label>
@@ -671,7 +692,9 @@ const invoiceTemplate = (params: {
           </div>
           <div class="invoice-grid-item">
             <label>Bank Tujuan</label>
-            <div class="value highlight">${withdrawal.bank} - ${withdrawal.no_rekening}</div>
+            <div class="value highlight">${withdrawal.bank} - ${
+    withdrawal.no_rekening
+  }</div>
           </div>
         </div>
 
@@ -681,15 +704,17 @@ const invoiceTemplate = (params: {
         <div class="invoice-details">
           <div class="invoice-row">
             <span class="label">Komisi Dicairkan</span>
-            <span class="value">Rp ${withdrawal.nominal.toLocaleString('id-ID')}</span>
+            <span class="value">Rp ${withdrawal.nominal.toLocaleString(
+              "id-ID"
+            )}</span>
           </div>
           <div class="invoice-row">
             <span class="label">Biaya Admin</span>
-            <span class="value">Rp ${adminFee.toLocaleString('id-ID')}</span>
+            <span class="value">Rp ${adminFee.toLocaleString("id-ID")}</span>
           </div>
           <div class="invoice-row total">
             <span class="label">TOTAL</span>
-            <span class="value">Rp ${total.toLocaleString('id-ID')}</span>
+            <span class="value">Rp ${total.toLocaleString("id-ID")}</span>
           </div>
         </div>
 
@@ -699,7 +724,9 @@ const invoiceTemplate = (params: {
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 4px;">
           <div>
             <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #8d8daa;">Status</span>
-            <div style="font-weight: 700; color: #43e97b; font-size: 0.95rem;">✓ ${withdrawal.status}</div>
+            <div style="font-weight: 700; color: #43e97b; font-size: 0.95rem;">✓ ${
+              withdrawal.status
+            }</div>
           </div>
           <div style="font-size: 0.7rem; color: #b0b2b8;">
             Dokumen ini merupakan bukti penarikan komisi affiliate<br>
@@ -726,11 +753,8 @@ const invoiceTemplate = (params: {
   `;
 };
 
-// ============================================
 // SEND EMAIL FUNCTIONS
-// ============================================
-
-// 1. Reset Password
+// Mengirim email reset password ke user
 export async function sendResetPasswordEmail(
   to: string,
   userName: string,
@@ -738,61 +762,84 @@ export async function sendResetPasswordEmail(
 ): Promise<{ success: boolean; previewUrl?: string; error?: string }> {
   try {
     const transporter = await getTransporter();
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.BASE_URL || 'http://localhost:3000';
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.BASE_URL ||
+      "http://localhost:3000";
     const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
-    const logoPath = path.join(process.cwd(), 'public', 'Agri-X.png');
+    const logoPath = path.join(process.cwd(), "public", "Agri-X.png");
 
     const info = await transporter.sendMail({
-      from: `"Agri X" <${process.env.SMTP_FROM || 'noreply@agri-x.com'}>`,
+      from: `"Agri X" <${process.env.SMTP_FROM || "noreply@agri-x.com"}>`,
       to,
-      subject: '🔐 Reset Password Agri X',
+      subject: "🔐 Reset Password Agri X",
       html: resetPasswordTemplate(userName, resetLink),
-      attachments: [{ filename: 'Agri-X.png', path: logoPath, cid: 'agri-x-logo' }],
+      attachments: [
+        { filename: "Agri-X.png", path: logoPath, cid: "agri-x-logo" },
+      ],
     });
 
-    console.log('📧 Email reset password terkirim:', { to, messageId: info.messageId });
+    console.log("📧 Email reset password terkirim:", {
+      to,
+      messageId: info.messageId,
+    });
 
     let previewUrl: string | undefined;
-    if (process.env.NODE_ENV === 'development' && info?.messageId) {
+    if (process.env.NODE_ENV === "development" && info?.messageId) {
       previewUrl = nodemailer.getTestMessageUrl(info) as string;
-      if (previewUrl) console.log('👀 Preview email:', previewUrl);
+      if (previewUrl) console.log("👀 Preview email:", previewUrl);
     }
 
     return { success: true, previewUrl };
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error('❌ Gagal mengirim email reset password:', errMsg);
+    console.error("❌ Gagal mengirim email reset password:", errMsg);
     return { success: false, error: errMsg };
   }
 }
 
-// 2. Password Berhasil Diubah
+/**
+ * Mengirim email konfirmasi password berhasil diubah
+ *
+ * @param to - Email penerima
+ * @param userName - Nama user
+ * @returns Object berisi status sukses atau error
+ */
 export async function sendPasswordChangedEmail(
   to: string,
   userName: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const transporter = await getTransporter();
-    const logoPath = path.join(process.cwd(), 'public', 'Agri-X.png');
+    const logoPath = path.join(process.cwd(), "public", "Agri-X.png");
 
     await transporter.sendMail({
-      from: `"Agri X" <${process.env.SMTP_FROM || 'noreply@agri-x.com'}>`,
+      from: `"Agri X" <${process.env.SMTP_FROM || "noreply@agri-x.com"}>`,
       to,
-      subject: '✅ Password Agri X Berhasil Diubah',
+      subject: "✅ Password Agri X Berhasil Diubah",
       html: passwordChangedTemplate(userName),
-      attachments: [{ filename: 'Agri-X.png', path: logoPath, cid: 'agri-x-logo' }],
+      attachments: [
+        { filename: "Agri-X.png", path: logoPath, cid: "agri-x-logo" },
+      ],
     });
 
     return { success: true };
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error('❌ Gagal mengirim email konfirmasi password:', errMsg);
+    console.error("❌ Gagal mengirim email konfirmasi password:", errMsg);
     return { success: false, error: errMsg };
   }
 }
 
 // 3. Verifikasi Akun Sosial Media
-// 3a. Verifikasi Akun saat Register (BUKAN verifikasi sosmed)
+/**
+ * Mengirim email verifikasi akun (saat registrasi)
+ *
+ * @param to - Email penerima
+ * @param userName - Nama user
+ * @param verifyLink - Link verifikasi akun
+ * @returns Object berisi status sukses dan preview URL (jika dev)
+ */
 export async function sendAccountVerificationEmail(
   to: string,
   userName: string,
@@ -800,42 +847,54 @@ export async function sendAccountVerificationEmail(
 ): Promise<{ success: boolean; previewUrl?: string; error?: string }> {
   try {
     const transporter = await getTransporter();
-    const logoPath = path.join(process.cwd(), 'public', 'Agri-X.png');
+    const logoPath = path.join(process.cwd(), "public", "Agri-X.png");
 
     const info = await transporter.sendMail({
-      from: `"Agri X" <${process.env.SMTP_FROM || 'noreply@agri-x.com'}>`,
+      from: `"Agri X" <${process.env.SMTP_FROM || "noreply@agri-x.com"}>`,
       to,
-      subject: '✅ Verifikasi Akun Agri X Anda',
+      subject: "✅ Verifikasi Akun Agri X Anda",
       html: accountVerificationTemplate(userName, verifyLink),
-      attachments: [{ filename: 'Agri-X.png', path: logoPath, cid: 'agri-x-logo' }],
+      attachments: [
+        { filename: "Agri-X.png", path: logoPath, cid: "agri-x-logo" },
+      ],
     });
 
-    console.log('📧 Email verifikasi akun terkirim ke:', to);
+    console.log("📧 Email verifikasi akun terkirim ke:", to);
 
     let previewUrl: string | undefined;
-    if (process.env.NODE_ENV === 'development' && info?.messageId) {
+    if (process.env.NODE_ENV === "development" && info?.messageId) {
       previewUrl = nodemailer.getTestMessageUrl(info) as string;
-      if (previewUrl) console.log('👀 Preview email:', previewUrl);
+      if (previewUrl) console.log("👀 Preview email:", previewUrl);
     }
 
     return { success: true, previewUrl };
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error('❌ Gagal mengirim email verifikasi akun:', errMsg);
+    console.error("❌ Gagal mengirim email verifikasi akun:", errMsg);
 
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('⚠️  Development fallback: email tidak terkirim, gunakan link langsung.');
+    if (process.env.NODE_ENV === "development") {
+      console.warn(
+        "⚠️  Development fallback: email tidak terkirim, gunakan link langsung."
+      );
       return {
         success: true,
         previewUrl: verifyLink,
-        error: 'Email tidak terkirim (dev fallback)',
+        error: "Email tidak terkirim (dev fallback)",
       };
     }
     return { success: false, error: errMsg };
   }
 }
 
-// 3b. Verifikasi Akun Sosial Media (untuk pendaftaran affiliate)
+/**
+ * Mengirim email verifikasi akun sosial media untuk affiliate
+ *
+ * @param to - Email penerima
+ * @param platform - Nama platform (Instagram, YouTube, dll)
+ * @param username - Username di platform
+ * @param link - Link verifikasi
+ * @returns Object berisi status sukses dan preview URL (jika dev)
+ */
 export async function sendVerificationEmail(
   to: string,
   platform: string,
@@ -844,74 +903,96 @@ export async function sendVerificationEmail(
 ): Promise<{ success: boolean; previewUrl?: string; error?: string }> {
   try {
     const transporter = await getTransporter();
-    const logoPath = path.join(process.cwd(), 'public', 'Agri-X.png');
+    const logoPath = path.join(process.cwd(), "public", "Agri-X.png");
 
     const info = await transporter.sendMail({
-      from: `"Agri X" <${process.env.SMTP_FROM || 'noreply@agri-x.com'}>`,
+      from: `"Agri X" <${process.env.SMTP_FROM || "noreply@agri-x.com"}>`,
       to,
       subject: `📧 Verifikasi Akun ${platform} - Affiliate Agri X`,
       html: verificationEmailTemplate(platform, username, link),
-      attachments: [{ filename: 'Agri-X.png', path: logoPath, cid: 'agri-x-logo' }],
+      attachments: [
+        { filename: "Agri-X.png", path: logoPath, cid: "agri-x-logo" },
+      ],
     });
 
-    console.log('📧 Email verifikasi TERKIRIM ke:', to);
+    console.log("📧 Email verifikasi TERKIRIM ke:", to);
     console.log(`   Platform: ${platform}, Username: ${username}`);
     console.log(`   Message ID: ${info?.messageId}`);
 
     let previewUrl: string | undefined;
-    if (process.env.NODE_ENV === 'development' && info?.messageId) {
+    if (process.env.NODE_ENV === "development" && info?.messageId) {
       previewUrl = nodemailer.getTestMessageUrl(info) as string;
-      if (previewUrl) console.log('👀 Preview link (Ethereal):', previewUrl);
+      if (previewUrl) console.log("👀 Preview link (Ethereal):", previewUrl);
     }
 
     return { success: true, previewUrl };
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error('❌ Gagal kirim email ke', to, errMsg);
+    console.error("❌ Gagal kirim email ke", to, errMsg);
 
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('⚠️  Development fallback: email tidak terkirim, gunakan link langsung.');
+    if (process.env.NODE_ENV === "development") {
+      console.warn(
+        "⚠️  Development fallback: email tidak terkirim, gunakan link langsung."
+      );
       return {
         success: true,
         previewUrl: link,
-        error: 'Email tidak terkirim (dev fallback)',
+        error: "Email tidak terkirim (dev fallback)",
       };
     }
     return { success: false, error: errMsg };
   }
 }
 
-// 4. Pengajuan Affiliate Disetujui
+/**
+ * Mengirim email notifikasi pengajuan affiliate disetujui
+ *
+ * @param to - Email penerima
+ * @param userName - Nama user
+ * @returns Object berisi status sukses atau error
+ */
 export async function sendAffiliateApprovedEmail(
   to: string,
   userName: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const transporter = await getTransporter();
-    const logoPath = path.join(process.cwd(), 'public', 'Agri-X.png');
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.BASE_URL || 'http://localhost:3000';
+    const logoPath = path.join(process.cwd(), "public", "Agri-X.png");
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.BASE_URL ||
+      "http://localhost:3000";
     const dashboardLink = `${baseUrl}/affiliate/dashboard`;
 
     await transporter.sendMail({
-      from: `"Agri X" <${process.env.SMTP_FROM || 'noreply@agri-x.com'}>`,
+      from: `"Agri X" <${process.env.SMTP_FROM || "noreply@agri-x.com"}>`,
       to,
-      subject: '🎉 Pengajuan Affiliate Anda Disetujui - Agri X',
+      subject: "🎉 Pengajuan Affiliate Anda Disetujui - Agri X",
       html: affiliateApprovedTemplate(userName, dashboardLink),
-      attachments: [{ filename: 'Agri-X.png', path: logoPath, cid: 'agri-x-logo' }],
+      attachments: [
+        { filename: "Agri-X.png", path: logoPath, cid: "agri-x-logo" },
+      ],
     });
 
-    console.log('📧 Email approval affiliate terkirim ke:', to);
+    console.log("📧 Email approval affiliate terkirim ke:", to);
 
     return { success: true };
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error('❌ Gagal mengirim email approval affiliate:', errMsg);
+    console.error("❌ Gagal mengirim email approval affiliate:", errMsg);
     return { success: false, error: errMsg };
   }
 }
 
 // 5. INVOICE WITHDRAWAL EMAIL (BARU)
-// Permintaan Reaktivasi Akun Affiliate (ke admin)
+/**
+ * Mengirim email permintaan reaktivasi akun affiliate ke admin
+ *
+ * @param to - Email admin penerima
+ * @param affiliateUserName - Nama affiliate
+ * @param affiliateEmail - Email affiliate
+ * @returns Object berisi status sukses atau error
+ */
 export async function sendReactivationRequestEmail(
   to: string,
   affiliateUserName: string,
@@ -919,29 +1000,45 @@ export async function sendReactivationRequestEmail(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const transporter = await getTransporter();
-    const logoPath = path.join(process.cwd(), 'public', 'Agri-X.png');
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.BASE_URL || 'http://localhost:3000';
+    const logoPath = path.join(process.cwd(), "public", "Agri-X.png");
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.BASE_URL ||
+      "http://localhost:3000";
     const adminLink = `${baseUrl}/admin/affiliates`;
 
     await transporter.sendMail({
-      from: `"Agri X" <${process.env.SMTP_FROM || 'noreply@agri-x.com'}>`,
+      from: `"Agri X" <${process.env.SMTP_FROM || "noreply@agri-x.com"}>`,
       to,
-      subject: '🔔 Permintaan Reaktivasi Akun Affiliate - Agri X',
-      html: reactivationRequestTemplate(affiliateUserName, affiliateEmail, adminLink),
-      attachments: [{ filename: 'Agri-X.png', path: logoPath, cid: 'agri-x-logo' }],
+      subject: "🔔 Permintaan Reaktivasi Akun Affiliate - Agri X",
+      html: reactivationRequestTemplate(
+        affiliateUserName,
+        affiliateEmail,
+        adminLink
+      ),
+      attachments: [
+        { filename: "Agri-X.png", path: logoPath, cid: "agri-x-logo" },
+      ],
     });
 
-    console.log('📧 Email permintaan reaktivasi terkirim ke admin:', to);
+    console.log("📧 Email permintaan reaktivasi terkirim ke admin:", to);
 
     return { success: true };
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error('❌ Gagal mengirim email permintaan reaktivasi:', errMsg);
+    console.error("❌ Gagal mengirim email permintaan reaktivasi:", errMsg);
     return { success: false, error: errMsg };
   }
-} 
+}
 
-// OTP Penarikan Komisi
+/**
+ * Mengirim email OTP verifikasi penarikan komisi
+ *
+ * @param to - Email penerima
+ * @param userName - Nama user
+ * @param otp - Kode OTP 6 digit
+ * @returns Object berisi status sukses atau error
+ */
 export async function sendWithdrawalOtpEmail(
   to: string,
   userName: string,
@@ -949,26 +1046,41 @@ export async function sendWithdrawalOtpEmail(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const transporter = await getTransporter();
-    const logoPath = path.join(process.cwd(), 'public', 'Agri-X.png');
+    const logoPath = path.join(process.cwd(), "public", "Agri-X.png");
 
     await transporter.sendMail({
-      from: `"Agri X" <${process.env.SMTP_FROM || 'noreply@agri-x.com'}>`,
+      from: `"Agri X" <${process.env.SMTP_FROM || "noreply@agri-x.com"}>`,
       to,
       subject: `🔐 Kode OTP Penarikan Komisi: ${otp}`,
       html: withdrawalOtpTemplate(userName, otp),
-      attachments: [{ filename: 'Agri-X.png', path: logoPath, cid: 'agri-x-logo' }],
+      attachments: [
+        { filename: "Agri-X.png", path: logoPath, cid: "agri-x-logo" },
+      ],
     });
 
-    console.log('📧 Email OTP penarikan terkirim ke:', to);
+    console.log("📧 Email OTP penarikan terkirim ke:", to);
 
     return { success: true };
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error('❌ Gagal mengirim email OTP penarikan:', errMsg);
+    console.error("❌ Gagal mengirim email OTP penarikan:", errMsg);
     return { success: false, error: errMsg };
   }
 }
 
+/**
+ * Mengirim invoice penarikan komisi via email
+ *
+ * @param params - Parameter invoice
+ * @param params.email - Email penerima
+ * @param params.name - Nama penerima
+ * @param params.withdrawal - Data penarikan (id, bank, no_rekening, nominal, status, created_at)
+ * @param params.user - Data user (nama_lengkap, email, no_telp)
+ * @param params.invoiceNumber - Nomor invoice unik
+ * @param params.adminFee - Biaya admin
+ * @param params.date - Tanggal invoice
+ * @returns Object berisi status sukses dan preview URL (jika dev)
+ */
 export async function sendWithdrawalInvoiceEmail(params: {
   email: string;
   name: string;
@@ -992,12 +1104,12 @@ export async function sendWithdrawalInvoiceEmail(params: {
 }): Promise<{ success: boolean; previewUrl?: string; error?: string }> {
   try {
     const transporter = await getTransporter();
-    const logoPath = path.join(process.cwd(), 'public', 'Agri-X.png');
+    const logoPath = path.join(process.cwd(), "public", "Agri-X.png");
 
     const { email, withdrawal, user, invoiceNumber, adminFee, date } = params;
 
     const info = await transporter.sendMail({
-      from: `"Agri X" <${process.env.SMTP_FROM || 'noreply@agri-x.com'}>`,
+      from: `"Agri X" <${process.env.SMTP_FROM || "noreply@agri-x.com"}>`,
       to: email,
       subject: `🧾 Invoice Penarikan Komisi #${invoiceNumber}`,
       html: invoiceTemplate({
@@ -1007,28 +1119,39 @@ export async function sendWithdrawalInvoiceEmail(params: {
         adminFee,
         date,
       }),
-      attachments: [{ filename: 'Agri-X.png', path: logoPath, cid: 'agri-x-logo' }],
+      attachments: [
+        { filename: "Agri-X.png", path: logoPath, cid: "agri-x-logo" },
+      ],
     });
 
-    console.log('📧 Invoice withdrawal email terkirim ke:', email);
-    console.log(`   Invoice: ${invoiceNumber}, Nominal: Rp ${withdrawal.nominal.toLocaleString('id-ID')}`);
+    console.log("📧 Invoice withdrawal email terkirim ke:", email);
+    console.log(
+      `   Invoice: ${invoiceNumber}, Nominal: Rp ${withdrawal.nominal.toLocaleString(
+        "id-ID"
+      )}`
+    );
     console.log(`   Message ID: ${info?.messageId}`);
 
     let previewUrl: string | undefined;
-    if (process.env.NODE_ENV === 'development' && info?.messageId) {
+    if (process.env.NODE_ENV === "development" && info?.messageId) {
       previewUrl = nodemailer.getTestMessageUrl(info) as string;
-      if (previewUrl) console.log('👀 Preview invoice (Ethereal):', previewUrl);
+      if (previewUrl) console.log("👀 Preview invoice (Ethereal):", previewUrl);
     }
 
     return { success: true, previewUrl };
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error('❌ Gagal mengirim invoice withdrawal:', errMsg);
+    console.error("❌ Gagal mengirim invoice withdrawal:", errMsg);
     return { success: false, error: errMsg };
   }
 }
 
-// 6. Test Koneksi
+/**
+ * Fungsi test koneksi SMTP
+ * Digunakan untuk memverifikasi konfigurasi email
+ *
+ * @returns Object berisi status dan pesan hasil test
+ */
 export async function testEmailConnection(): Promise<{
   success: boolean;
   message: string;
@@ -1036,7 +1159,7 @@ export async function testEmailConnection(): Promise<{
   try {
     const transporter = await getTransporter();
     await transporter.verify();
-    return { success: true, message: '✅ Koneksi SMTP berhasil' };
+    return { success: true, message: "✅ Koneksi SMTP berhasil" };
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
     return { success: false, message: `❌ ${errMsg}` };

@@ -1,9 +1,7 @@
 // lib/referral.ts
 
-/**
- * Deteksi platform dari referer URL
- * Ini adalah kunci utama untuk tracking platform asal
- */
+//  * Mendeteksi platform asal pengunjung dari referer URL dan user agent
+//  * Fungsi ini adalah kunci utama untuk tracking platform asal referral
 export function detectPlatformFromReferer(): string {
   if (typeof window === 'undefined') return 'direct';
   
@@ -24,7 +22,7 @@ export function detectPlatformFromReferer(): string {
     if (referer.includes('line.me')) return 'line';
     if (referer.includes('wechat.com')) return 'wechat';
     
-    // Deteksi dari user agent (social media apps)
+    // Deteksi dari user agent (social media apps in-app browser)
     const ua = navigator.userAgent.toLowerCase();
     if (ua.includes('instagram')) return 'instagram';
     if (ua.includes('tiktok')) return 'tiktok';
@@ -38,9 +36,8 @@ export function detectPlatformFromReferer(): string {
   }
 }
 
-/**
- * Track referral click dengan deteksi platform otomatis
- */
+//  * Melacak klik referral dengan deteksi platform secara otomatis
+//  * Fungsi ini akan mengirim request ke API untuk mencatat klik referral
 export async function trackReferralClick(referralCode: string): Promise<{ success: boolean; error?: string }> {
   try {
     if (!referralCode) {
@@ -77,9 +74,7 @@ export async function trackReferralClick(referralCode: string): Promise<{ succes
   }
 }
 
-/**
- * Simpan referral code di localStorage untuk digunakan di halaman lain
- */
+//  * Menyimpan kode referral di localStorage dan sessionStorage
 export function storeReferralCode(code: string): void {
   if (typeof window === 'undefined') return;
   
@@ -91,9 +86,7 @@ export function storeReferralCode(code: string): void {
   }
 }
 
-/**
- * Ambil referral code yang tersimpan
- */
+//  * Mengambil kode referral yang tersimpan di localStorage atau sessionStorage
 export function getStoredReferralCode(): string | null {
   if (typeof window === 'undefined') return null;
   
@@ -106,9 +99,8 @@ export function getStoredReferralCode(): string | null {
   }
 }
 
-/**
- * Hapus referral code yang tersimpan
- */
+//  * Menghapus kode referral dari localStorage dan sessionStorage
+//  * Digunakan saat user sudah menyelesaikan transaksi atau logout
 export function clearStoredReferralCode(): void {
   if (typeof window === 'undefined') return;
   
@@ -120,9 +112,7 @@ export function clearStoredReferralCode(): void {
   }
 }
 
-/**
- * Generate link dengan referral code untuk sharing
- */
+//  * Membuat link referral lengkap dengan kode referral untuk sharing
 export function getReferralLink(
   baseUrl: string,
   referralCode: string

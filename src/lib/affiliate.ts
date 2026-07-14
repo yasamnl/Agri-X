@@ -1,19 +1,20 @@
 // src/lib/affiliate.ts
-import pool from '@/lib/db';
+import pool from "@/lib/db";
 
-// ============================================
-// TYPES
-// ============================================
+//  Interface untuk statistik afiliasi
+//  Menyimpan data ringkasan performa afiliasi
 export interface AffiliateStats {
-  totalClicks: number;
-  totalTransactions: number;
-  totalCommission: number;
-  availableBalance: number;
-  withdrawnAmount: number;
-  commissionRate: number;
-  referralCode: string;
+  totalClicks: number; // Total klik referral
+  totalTransactions: number; // Total transaksi yang berhasil
+  totalCommission: number; // Total komisi yang diperoleh
+  availableBalance: number; // Saldo yang dapat ditarik
+  withdrawnAmount: number; // Jumlah yang sudah ditarik
+  commissionRate: number; // Persentase komisi (dalam %)
+  referralCode: string; // Kode referral unik
 }
 
+// Interface untuk transaksi afiliasi
+// Detail setiap transaksi yang terjadi melalui referral
 export interface AffiliateTransaction {
   id: number;
   orderId: number;
@@ -21,18 +22,14 @@ export interface AffiliateTransaction {
   nominalTransaksi: number;
   komisi: number;
   persenKomisi: number;
-  status: 'pending' | 'completed' | 'cancelled' | 'refunded';
+  status: "pending" | "completed" | "cancelled" | "refunded";
   createdAt: string;
   completedAt: string | null;
 }
 
-// ============================================
 // HELPER FUNCTIONS
-// ============================================
 
-/**
- * Get affiliate application by user ID
- */
+//  Mendapatkan data afiliasi berdasarkan ID user
 export async function getAffiliateByUserId(userId: string | number) {
   const [rows] = await pool.query(
     `SELECT * FROM affiliate_applications 
@@ -40,13 +37,11 @@ export async function getAffiliateByUserId(userId: string | number) {
      LIMIT 1`,
     [userId]
   );
-  
+
   return (rows as any[])[0] || null;
 }
 
-/**
- * Get affiliate by referral code
- */
+//  * Mendapatkan data afiliasi berdasarkan kode referral
 export async function getAffiliateByCode(referralCode: string) {
   const [rows] = await pool.query(
     `SELECT * FROM affiliate_applications 
@@ -54,13 +49,12 @@ export async function getAffiliateByCode(referralCode: string) {
      LIMIT 1`,
     [referralCode]
   );
-  
+
   return (rows as any[])[0] || null;
 }
 
-/**
- * Track referral click
- */
+//  * Mencatat klik referral ke database
+//  * Fungsi ini akan menambahkan record klik baru dan mengupdate total klik afiliasi
 export async function trackReferralClick(
   affiliateApplicationId: number,
   ipAddress: string,
@@ -85,25 +79,21 @@ export async function trackReferralClick(
 
     return { success: true };
   } catch (error: any) {
-    console.error('Track click error:', error);
+    console.error("Track click error:", error);
     return { success: false, error: error.message };
   }
 }
 
-/**
- * Calculate commission
- */
+// Menghitung komisi berdasarkan nominal transaksi dan rate komisi
 export function calculateCommission(
   amount: number,
-  commissionRate: number = 5.00
+  commissionRate: number = 5.0
 ): number {
   return Math.round((amount * commissionRate) / 100);
 }
 
-/**
- * Create affiliate transaction — dicatat ke tabel `referral_transactions`
- * (bukan `affiliate_transactions`, tabel itu tidak dipakai lagi).
- */
+//  Membuat transaksi afiliasi baru
+//  Dicatat ke tabel `referral_transactions` (bukan `affiliate_transactions`, tabel itu tidak dipakai lagi)
 export async function createAffiliateTransaction(params: {
   affiliateApplicationId: number;
   orderId: number;
@@ -136,23 +126,22 @@ export async function createAffiliateTransaction(params: {
       ]
     );
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       transactionId: (result as any).insertId,
-      komisi 
+      komisi,
     };
   } catch (error: any) {
-    console.error('Create transaction error:', error);
+    console.error("Create transaction error:", error);
     return { success: false, error: error.message };
   }
 }
 
-/**
- * Complete affiliate transaction (after payment success)
- */
+// Menyelesaikan transaksi afiliasi setelah pembayaran berhasil
+// Menggunakan transaction database untuk memastikan konsistensi data
 export async function completeAffiliateTransaction(orderId: number) {
   let connection;
-  
+
   try {
     connection = await pool.getConnection();
     await connection.beginTransaction();
@@ -168,7 +157,7 @@ export async function completeAffiliateTransaction(orderId: number) {
     const transaction = (transactions as any[])[0];
     if (!transaction) {
       await connection.rollback();
-      return { success: false, error: 'Transaction not found' };
+      return { success: false, error: "Transaction not found" };
     }
 
     // Update transaction status
@@ -183,7 +172,7 @@ export async function completeAffiliateTransaction(orderId: number) {
     return { success: true, komisi: transaction.komisi };
   } catch (error: any) {
     if (connection) await connection.rollback();
-    console.error('Complete transaction error:', error);
+    console.error("Complete transaction error:", error);
     return { success: false, error: error.message };
   } finally {
     if (connection) connection.release();
@@ -191,7 +180,11 @@ export async function completeAffiliateTransaction(orderId: number) {
 }
 
 /**
- * Cancel affiliate transaction
+ * Membatalkan transaksi afiliasi
+ * Mengubah status transaksi pending menjadi cancelled
+ *
+ * @param orderId - ID order yang akan dibatalkan
+ * @returns Object berisi status sukses atau error
  */
 export async function cancelAffiliateTransaction(orderId: number) {
   try {
@@ -204,25 +197,23 @@ export async function cancelAffiliateTransaction(orderId: number) {
 
     return { success: true };
   } catch (error: any) {
-    console.error('Cancel transaction error:', error);
+    console.error("Cancel transaction error:", error);
     return { success: false, error: error.message };
   }
 }
 
-/**
- * Get affiliate transactions list
- */
+// Mendapatkan daftar transaksi afiliasi dengan pagination dan filter status
 export async function getAffiliateTransactions(
   affiliateApplicationId: number,
   page: number = 1,
   limit: number = 10,
   status?: string
 ) {
-  let whereClause = 'WHERE rt.affiliate_application_id = ?';
+  let whereClause = "WHERE rt.affiliate_application_id = ?";
   const params: any[] = [affiliateApplicationId];
 
-  if (status && status !== 'all') {
-    whereClause += ' AND rt.status = ?';
+  if (status && status !== "all") {
+    whereClause += " AND rt.status = ?";
     params.push(status);
   }
 
@@ -279,25 +270,31 @@ export async function getAffiliateTransactions(
   };
 }
 
-/**
- * Generate referral link
- */
-export function generateReferralLink(referralCode: string, baseUrl: string): string {
+// Membuat link referral lengkap dengan kode referral
+export function generateReferralLink(
+  referralCode: string,
+  baseUrl: string
+): string {
   return `${baseUrl}?ref=${referralCode}`;
 }
 
-/**
- * Generate share text
- */
-export function generateShareText(referralCode: string, baseUrl: string): string {
+// Membuat teks share untuk media sosial/messaging
+export function generateShareText(
+  referralCode: string,
+  baseUrl: string
+): string {
   const link = generateReferralLink(referralCode, baseUrl);
   return `🛒 Belanja produk pertanian segar di Agri-X!\n\nGunakan kode referral saya: ${referralCode}\n\n${link}\n\nDapatkan diskon spesial! 🎉`;
 }
 
-// app/lib/affiliate.ts
-export const getProductLink = (productId: number, affiliateId?: number, platform?: string) => {
+//  * Membuat link produk dengan parameter referral
+export const getProductLink = (
+  productId: number,
+  affiliateId?: number,
+  platform?: string
+) => {
   let url = `/produk/${productId}`;
-  
+
   if (affiliateId) {
     url += `?ref=${affiliateId}`;
     // Tambahkan platform jika ada (opsional)
@@ -305,6 +302,6 @@ export const getProductLink = (productId: number, affiliateId?: number, platform
       url += `&platform=${platform}`;
     }
   }
-  
+
   return url;
 };
