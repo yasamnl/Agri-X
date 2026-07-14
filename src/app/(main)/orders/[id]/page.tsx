@@ -13,7 +13,7 @@ import {
   CheckCircle, XCircle, AlertCircle, Loader2, RefreshCw,
   ShoppingBag, Calendar, Phone, User, FileText, Copy
 } from 'lucide-react';
-import { TrackingSection } from '@/components/orders/TrackingSection';
+
 
 // ============================================================================
 // TYPES
@@ -538,13 +538,7 @@ export default function OrderDetailPage() {
               )}
             </div>
 
-            {/* ================================================================
-                TRACKING SECTION
-                ================================================================ */}
-            {['shipped', 'delivered', 'completed'].includes(order.status) && (
-              <TrackingSection orderId={Number(orderId)} />
-            )}
-
+          
             
 
             {/* ================================================================
@@ -704,18 +698,7 @@ export default function OrderDetailPage() {
                   </button>
                 )}
 
-                {['shipped', 'delivered'].includes(order.status) && (
-                  <button
-                    onClick={() => {
-                      const el = document.querySelector('[data-tracking-section]');
-                      el?.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="btn-outline w-full flex items-center justify-center gap-2"
-                  >
-                    <Truck className="w-4 h-4" />
-                    Lihat Tracking
-                  </button>
-                )}
+                
               </div>
             </div>
           </div>

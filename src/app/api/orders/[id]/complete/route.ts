@@ -68,15 +68,15 @@ export async function POST(
       );
     }
 
-    if (order.status !== "shipped") {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Order belum dikirim",
-        },
-        { status: 400 }
-      );
-    }
+    if (order.status !== "delivered") {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Barang belum sampai",
+    },
+    { status: 400 }
+  );
+}
 
     await pool.query(
       `
