@@ -2,45 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken } from '@/lib/auth';
 import { getAffiliateByUserId } from '@/lib/affiliate';
-
-// Simpan OTP sementara di memory (HANYA UNTUK DEMO)
-// Di production, gunakan Redis atau database
-const otpStore = new Map<string, { otp: string; expiresAt: number }>();
-
-// Fungsi untuk menyimpan OTP (dipanggil dari request-otp)
-export function storeOTP(affiliateId: string, otp: string) {
-  const expiresAt = Date.now() + 5 * 60 * 1000; // 5 menit
-  otpStore.set(affiliateId, { otp, expiresAt });
-  
-  // Auto cleanup
-  setTimeout(() => {
-    if (otpStore.has(affiliateId)) {
-      const data = otpStore.get(affiliateId);
-      if (data && data.expiresAt < Date.now()) {
-        otpStore.delete(affiliateId);
-      }
-    }
-  }, 10 * 60 * 1000);
-}
-
-// Fungsi untuk verifikasi OTP
-export function verifyOTP(affiliateId: string, inputOTP: string): boolean {
-  const stored = otpStore.get(affiliateId);
-  if (!stored) {
-    return false;
-  }
-  
-  if (stored.expiresAt < Date.now()) {
-    otpStore.delete(affiliateId);
-    return false;
-  }
-  
-  return stored.otp === inputOTP;
-}
-
-export function deleteOTP(affiliateId: string) {
-  otpStore.delete(affiliateId);
-}
+import { WithdrawalOtp } from '@/lib/withdrawal-otp';
 
 export async function POST(req: NextRequest) {
   try {
@@ -76,18 +38,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Verifikasi OTP dari store
-    const isValid = verifyOTP(affiliate.id, otp);
-    
-    if (!isValid) {
+    // 4. Cari & verifikasi OTP dari tabel WithdrawalOTP
+    const otpRecord = await WithdrawalOtp.verify(otp);
+
+    if (!otpRecord || otpRecord.userId !== Number(decoded.sub)) {
       return NextResponse.json(
         { success: false, error: 'Kode OTP tidak valid atau sudah kadaluwarsa.' },
         { status: 400 }
       );
     }
 
-    // Hapus OTP setelah berhasil diverifikasi (sekali pakai)
-    deleteOTP(affiliate.id);
+    // 5. Invalidate (sekali pakai)
+    await otpRecord.invalidate();
 
     return NextResponse.json({
       success: true,

@@ -2,13 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken } from '@/lib/auth';
 import { getAffiliateByUserId } from '@/lib/affiliate';
-import { storeOTP } from '../verify-otp/route';
-import pool from '@/lib/db';
-import { sendWithdrawalOtpEmail } from '@/lib/email';
-
-function generateOTP(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
+import { WithdrawalOtp } from '@/lib/withdrawal-otp';
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,22 +27,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Generate OTP dan simpan
-    const otp = generateOTP();
-    storeOTP(affiliate.id, otp);
-    
-    console.log(`📱 [OTP DEMO] Kode OTP untuk affiliate ${affiliate.id}: ${otp}`);
+    // 3. Generate OTP dan simpan ke tabel WithdrawalOTP
+    const otp = await WithdrawalOtp.generate(decoded.sub);
 
-    // 4. Ambil data user untuk dikirimi email
-    const [userRows] = await pool.query(
-      `SELECT name, email FROM users WHERE id = ?`,
-      [decoded.sub]
-    );
-    const user = (userRows as any[])[0];
+    console.log(`📱 [OTP DEMO] Kode OTP untuk user ${decoded.sub}: ${otp.otpCode}`);
 
-    // 5. Kirim OTP via email (kode yang sama dengan yang disimpan)
+    // 4. Kirim OTP via email
+    const user = await otp.user();
     if (user?.email) {
-      const emailResult = await sendWithdrawalOtpEmail(user.email, user.name, otp);
+      const emailResult = await otp.sendOtp(user.email);
       if (!emailResult.success) {
         console.error('❌ Gagal kirim email OTP:', emailResult.error);
       }
@@ -57,7 +44,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Kode OTP telah dikirim ke email Anda.',
-      demo_otp: otp,
+      demo_otp: otp.otpCode,
     });
   } catch (error: any) {
     console.error('❌ Request OTP error:', error);
