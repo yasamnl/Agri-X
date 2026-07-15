@@ -288,10 +288,7 @@ export function ProductCard({
       ? Number(product.total_reviews)
       : 0;
 
-  /**
-   * Membuat link produk dengan referral code jika ada
-   * @returns URL produk dengan parameter referral
-   */
+  //  * Membuat link produk dengan referral code jika ada
   const getProductLink = () => {
     let url = `/produk/${product.id}`;
     if (referralCode) {
