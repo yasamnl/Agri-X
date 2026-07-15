@@ -60,6 +60,7 @@ export default function AffiliateApplyPage() {
   const [modalUsername, setModalUsername] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [verifyingIndex, setVerifyingIndex] = useState<number | null>(null);
+  const [hydrated, setHydrated] = useState(false);
 
   // State untuk modal S&K dan Kebijakan Privasi
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -103,6 +104,10 @@ export default function AffiliateApplyPage() {
       Date.now().toString(36);
     localStorage.setItem("affiliate_session_key", newKey);
     return newKey;
+  };
+
+  const getAccountsStorageKey = (): string => {
+    return `affiliate_accounts_${getSessionKey()}`;
   };
 
   // ============================================
@@ -240,6 +245,56 @@ export default function AffiliateApplyPage() {
   // ============================================
   // POLLING VERIFIKASI
   // ============================================
+  const checkVerificationNow = async (accountsToCheck: SosmedAccount[]) => {
+    try {
+      const token = getCookie("accessToken");
+      if (!token) return;
+
+      const currentEmail = email || user?.email || "";
+      if (!currentEmail) return;
+
+      const res = await fetch("/api/affiliate/apply/check-verification", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: currentEmail,
+          session_key: getSessionKey(),
+          accounts: accountsToCheck.map((a) => ({
+            platform: a.platform,
+            username: a.username,
+          })),
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.verified_accounts) {
+        setAccounts((prev) => {
+          let updated = false;
+          const newAcc = prev.map((a) => {
+            const found = data.verified_accounts.find(
+              (v: any) =>
+                v.platform === a.platform && v.username === a.username
+            );
+            if (found && !a.verified) {
+              updated = true;
+              return { ...a, verified: true, tokenSent: false };
+            }
+            return a;
+          });
+          if (updated) {
+            toast.success("✅ Akun berhasil diverifikasi!");
+          }
+          return newAcc;
+        });
+      }
+    } catch (err) {
+      console.error("Check verification error:", err);
+    }
+  };
+
   const startPolling = () => {
     if (pollingIntervalRef.current) return;
 
@@ -256,55 +311,58 @@ export default function AffiliateApplyPage() {
         return;
       }
 
-      try {
-        const token = getCookie("accessToken");
-        if (!token) return;
-
-        const currentEmail = email || user?.email || "";
-        if (!currentEmail) return;
-
-        const res = await fetch("/api/affiliate/apply/check-verification", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: currentEmail,
-            session_key: getSessionKey(),
-            accounts: accounts.map((a) => ({
-              platform: a.platform,
-              username: a.username,
-            })),
-          }),
-        });
-
-        const data = await res.json();
-        if (data.success && data.verified_accounts) {
-          setAccounts((prev) => {
-            let updated = false;
-            const newAcc = prev.map((a) => {
-              const found = data.verified_accounts.find(
-                (v: any) =>
-                  v.platform === a.platform && v.username === a.username
-              );
-              if (found && !a.verified) {
-                updated = true;
-                return { ...a, verified: true, tokenSent: false };
-              }
-              return a;
-            });
-            if (updated) {
-              toast.success("✅ Akun berhasil diverifikasi!");
-            }
-            return newAcc;
-          });
-        }
-      } catch (err) {
-        console.error("Polling error:", err);
-      }
+      await checkVerificationNow(accounts);
     }, 5000);
   };
+
+  // ============================================
+  // RESTORE AKUN DARI LOCAL STORAGE (mis. setelah
+  // user kembali dari link verifikasi email)
+  // ============================================
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(getAccountsStorageKey());
+      if (saved) {
+        const parsed: SosmedAccount[] = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAccounts(parsed);
+        }
+      }
+    } catch (err) {
+      console.error("Gagal memuat akun sosmed tersimpan:", err);
+    } finally {
+      setHydrated(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Simpan akun ke local storage setiap kali berubah (setelah hydrate)
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(
+        getAccountsStorageKey(),
+        JSON.stringify(accounts)
+      );
+    } catch (err) {
+      console.error("Gagal menyimpan akun sosmed:", err);
+    }
+  }, [accounts, hydrated]);
+
+  // Begitu selesai hydrate, langsung cek status verifikasi ke server
+  // (bukan menunggu 5 detik polling) supaya badge langsung update
+  // kalau user baru saja verifikasi lalu klik "kembali ke pendaftaran"
+  useEffect(() => {
+    if (!hydrated) return;
+    const hasPending = accounts.some((a) => a.tokenSent && !a.verified);
+    if (hasPending) {
+      checkVerificationNow(accounts);
+      if (!pollingIntervalRef.current) {
+        startPolling();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
 
   // ============================================
   // SUBMIT FINAL
@@ -356,6 +414,11 @@ export default function AffiliateApplyPage() {
       }
 
       toast.success(result.message);
+      try {
+        localStorage.removeItem(getAccountsStorageKey());
+      } catch (err) {
+        console.error("Gagal membersihkan akun sosmed tersimpan:", err);
+      }
       router.push("/akun");
     } catch (error: any) {
       toast.error(error.message || "Gagal mengajukan aplikasi");
