@@ -100,6 +100,18 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // 7. Set roles user menjadi 'affiliate' (kolom roles = JSON array, jangan timpa role lain)
+      await connection.query(
+        `UPDATE users
+         SET roles = CASE
+           WHEN roles IS NULL THEN JSON_ARRAY('affiliate')
+           WHEN JSON_CONTAINS(roles, '"affiliate"') = 0 THEN JSON_ARRAY_APPEND(roles, '$', 'affiliate')
+           ELSE roles
+         END
+         WHERE id = ?`,
+        [userId]
+      );
+
       await connection.commit();
       connection.release();
 

@@ -57,6 +57,20 @@ export async function POST(
       [now, now, id]
     );
 
+    // Set roles user jadi 'affiliate' (append, jangan timpa role lain) +
+    // affiliate_status user otomatis jadi 'completed' — bukan dari input admin
+    await pool.query(
+      `UPDATE users
+       SET roles = CASE
+         WHEN roles IS NULL THEN JSON_ARRAY('affiliate')
+         WHEN JSON_CONTAINS(roles, '"affiliate"') = 0 THEN JSON_ARRAY_APPEND(roles, '$', 'affiliate')
+         ELSE roles
+       END,
+       affiliate_status = 'completed'
+       WHERE id = ?`,
+      [app.user_id]
+    );
+
     // Catat activation request
     await pool.query(
       `INSERT INTO activation_requests 
