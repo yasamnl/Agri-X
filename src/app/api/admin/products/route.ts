@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import db from '@/lib/db-adapter';
 import { verifyAccessToken } from '@/utils/jwt.util';
 import { handleAPIError } from '@/lib/middleware';
 
@@ -17,162 +17,122 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
     }
 
-    // ✅ Parse query params
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get('search')?.trim();
-    const status = searchParams.get('status');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
     const page = Math.max(parseInt(searchParams.get('page') || '1'), 1);
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
+    const status = searchParams.get('status') || 'all';
+    const search = searchParams.get('search') || '';
     const offset = (page - 1) * limit;
 
-    // ✅ Build query dengan search & filter - PostgreSQL syntax
-    let query = `SELECT 
-        p.id,
-        p.name,
-        p.description,
-        p.price,
-        p.unit,
-        p.stock,
-        p.sold_count,
-        p.origin_village_code,
-        p.min_order,
+    let whereClause = 'WHERE p.status != ?';
+    const params: any[] = ['deleted'];
+
+    if (status !== 'all' && ['ready_stock', 'pre-order', 'sold_out'].includes(status)) {
+      whereClause += ' AND p.status = ?';
+      params.push(status);
+    }
+
+    if (search.trim()) {
+      whereClause += ' AND (p.name LIKE ? OR p.description LIKE ? OR u.name LIKE ?)';
+      const searchParam = `%${search.trim()}%`;
+      params.push(searchParam, searchParam, searchParam);
+    }
+
+    // Products query with rating aggregates (same as seller API format)
+    const productsResult = await db.execute(
+      `SELECT 
+        p.id, p.name, p.description, p.price, p.unit, p.stock,
+        p.min_order, p.sold_count, p.category, p.category_id,
+        p.status, p.harvest_date, p.image_path,
+        p.po_quota, p.po_sold, p.created_at, p.updated_at,
         p.seller_id,
-        p.harvest_date,
-        p.image_path,
-        p.category,
-        p.status,
-        p.po_quota,
-        p.po_sold,
-        p.category_id,
-        p.created_at,
-        p.updated_at,
         u.name as seller_name,
         u.email as seller_email,
-        c.name as category_name
+        COALESCE(AVG(r.rating), 0) as avg_rating,
+        COUNT(DISTINCT r.id) as review_count
       FROM products p
       LEFT JOIN users u ON p.seller_id = u.id
-      LEFT JOIN category c ON p.category_id = c.id
-      WHERE p.status != 'deleted'`;
-    
-    const params: any[] = [];
-    let paramIndex = 1;
+      LEFT JOIN reviews r ON p.id = r.product_id
+      ${whereClause}
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
+      LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
+    );
 
-    // ✅ Search filter - PostgreSQL: $1, $2, ...
-    if (search) {
-      query += ` AND (
-        p.name LIKE $${paramIndex} OR 
-        p.description LIKE $${paramIndex + 1} OR 
-        p.category LIKE $${paramIndex + 2} OR 
-        u.name LIKE $${paramIndex + 3} OR
-        c.name LIKE $${paramIndex + 4}
-      )`;
-      const searchParam = `%${search}%`;
-      params.push(searchParam, searchParam, searchParam, searchParam, searchParam);
-      paramIndex += 5;
-    }
-
-    // ✅ Status filter
-    if (status && ['ready_stock', 'pre-order', 'sold_out'].includes(status)) {
-      query += ` AND p.status = $${paramIndex}`;
-      params.push(status);
-      paramIndex++;
-    }
-
-    // ✅ Pagination
-    query += ` ORDER BY p.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-    params.push(limit, offset);
-
-    // ✅ Execute query - PostgreSQL: pool.query() + { rows }
-    // pool.execute returns [rows, fields] - cast to any to satisfy TS
-    const productsResult: any = await pool.execute(query, params);
     const products: any[] = productsResult[0] || [];
 
-    // ✅ Get total count for pagination
-    let countQuery = `SELECT COUNT(*) as total 
-      FROM products p
-      LEFT JOIN users u ON p.seller_id = u.id
-      LEFT JOIN category c ON p.category_id = c.id
-      WHERE p.status != 'deleted'`;
-    const countParams: any[] = [];
-    let countParamIndex = 1;
-    
-    if (search) {
-      countQuery += ` AND (
-        p.name LIKE $${countParamIndex} OR 
-        p.description LIKE $${countParamIndex + 1} OR 
-        p.category LIKE $${countParamIndex + 2} OR 
-        u.name LIKE $${countParamIndex + 3} OR
-        c.name LIKE $${countParamIndex + 4}
-      )`;
-      const searchParam = `%${search}%`;
-      countParams.push(searchParam, searchParam, searchParam, searchParam, searchParam);
-      countParamIndex += 5;
-    }
-    if (status && ['ready_stock', 'pre-order', 'sold_out'].includes(status)) {
-      countQuery += ` AND p.status = $${countParamIndex}`;
-      countParams.push(status);
-    }
+    // Count total
+    const countResult = await db.execute(
+      `SELECT COUNT(DISTINCT p.id) as total
+       FROM products p
+       LEFT JOIN users u ON p.seller_id = u.id
+       ${whereClause}`,
+      params
+    );
 
-    const countResultRaw: any = await pool.execute(countQuery, countParams);
-    const countRows: any[] = countResultRaw[0] || [];
-    const total = Number(countRows[0]?.total || 0);
+    const total = Number((countResult[0] as any[])[0]?.total || 0);
 
-    // ✅ Format response - Convert types for consistency
-    const formattedProducts = products.map((p: any) => ({
-      id: Number(p.id),
-      name: p.name,
-      description: p.description,
-      price: Number(p.price),
-      unit: p.unit,
-      stock: Number(p.stock),
-      sold_count: Number(p.sold_count),
-      origin_village_code: p.origin_village_code,
-      min_order: Number(p.min_order),
-      seller_id: Number(p.seller_id),
-      seller_name: p.seller_name,
-      seller_email: p.seller_email,
-      harvest_date: p.harvest_date,
-      image_path: p.image_path,
-      category: p.category,
-      category_name: p.category_name,
-      status: p.status,
-      po_quota: p.po_quota ? Number(p.po_quota) : null,
-      po_sold: p.po_sold ? Number(p.po_sold) : null,
-      category_id: Number(p.category_id),
-      createdAt: p.created_at,
-      updatedAt: p.updated_at,
-    }));
+    // Status counts (all status variants)
+    const statusCountsResult = await db.execute(
+      `SELECT status, COUNT(*) as count
+       FROM products
+       WHERE status != ?
+       GROUP BY status`,
+      ['deleted']
+    );
 
+    const statusMap: Record<string, number> = {
+      all: total,
+      ready_stock: 0,
+      pre_order: 0,
+      sold_out: 0,
+    };
+
+    ((statusCountsResult[0] as any[]) || []).forEach((row: any) => {
+      statusMap[row.status] = Number(row.count);
+    });
+
+    // Format response - match seller API format (camelCase, includes ratings)
     return NextResponse.json({
       success: true,
-      products: formattedProducts,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: offset + limit < total,
-        hasPrev: page > 1,
+      data: {
+        products: products.map((p: any) => ({
+          id: Number(p.id),
+          name: p.name,
+          description: p.description,
+          price: Number(p.price),
+          unit: p.unit,
+          stock: Number(p.stock),
+          minOrder: Number(p.min_order),
+          soldCount: Number(p.sold_count || 0),
+          category: p.category,
+          categoryId: p.category_id ? Number(p.category_id) : null,
+          status: p.status,
+          harvestDate: p.harvest_date,
+          imagePath: p.image_path,
+          poQuota: p.po_quota ? Number(p.po_quota) : null,
+          poSold: Number(p.po_sold || 0),
+          sellerId: Number(p.seller_id),
+          sellerName: p.seller_name,
+          sellerEmail: p.seller_email,
+          avgRating: Number(p.avg_rating || 0),
+          reviewCount: Number(p.review_count || 0),
+          createdAt: p.created_at,
+          updatedAt: p.updated_at,
+        })),
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+        statusCounts: statusMap,
       },
     });
 
   } catch (error: any) {
-    console.error('Error fetching products:', error);
-    
-    // ✅ Handle PostgreSQL error codes
-    if (error.code === 'ER_NO_SUCH_TABLE') {
-      return NextResponse.json(
-        { success: false, error: 'Table not found', code: 'TABLE_NOT_FOUND' },
-        { status: 500 }
-      );
-    }
-    if (error.code === 'ER_BAD_FIELD_ERROR') {
-      return NextResponse.json(
-        { success: false, error: 'Column not found', code: 'COLUMN_NOT_FOUND' },
-        { status: 500 }
-      );
-    }
-    
+    console.error('❌ GET /api/admin/products error:', error);
     return handleAPIError(error, 'GET /api/admin/products');
   }
 }
