@@ -99,7 +99,13 @@ export default function LoginForm() {
 
       // Update Context Auth
       login(token, userData); 
-      
+
+      // Redirect admin users directly to admin dashboard
+      if (userData.role === 'admin') {
+        router.push('/admin');
+        return;
+      }
+
       // ✅ REDIRECT KE CALLBACK URL
       if (callbackUrl && callbackUrl.startsWith('/') && !callbackUrl.startsWith('//')) {
         setTimeout(() => {
