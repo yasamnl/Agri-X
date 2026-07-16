@@ -1,9 +1,12 @@
-// src/app/api/affiliate/sosmed/route.ts
+// src/app/api/affiliate/sosmed/[platform]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken } from '@/lib/auth';
 import pool from '@/lib/db';
 
-export async function POST(req: NextRequest) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { platform: string } }
+) {
   let connection;
   try {
     // 1. Auth
@@ -17,20 +20,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
     }
     const userId = decoded.sub;
-
-    // 2. Body
-    const body = await req.json();
-    const { platform, link } = body;
-    if (!platform || !link) {
-      return NextResponse.json(
-        { success: false, error: 'Platform dan link wajib diisi' },
-        { status: 400 }
-      );
-    }
+    const { platform } = params;
 
     connection = await pool.getConnection();
 
-    // 3. Get affiliate application milik user ini
+    // 2. Get affiliate application milik user ini
     const [appRows] = await connection.query(
       `SELECT id FROM affiliate_applications WHERE user_id = ? ORDER BY id DESC LIMIT 1`,
       [userId]
@@ -43,32 +37,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Cek duplikat (platform + link yang sama untuk affiliate ini)
-    const [dupRows] = await connection.query(
-      `SELECT id FROM affiliate_social_media WHERE affiliate_application_id = ? AND platform = ? AND link = ?`,
-      [application.id, platform, link]
+    // 3. Hapus baris sosmed berdasarkan platform
+    const [result]: any = await connection.query(
+      `DELETE FROM affiliate_social_media WHERE affiliate_application_id = ? AND platform = ?`,
+      [application.id, platform]
     );
-    if ((dupRows as any[]).length > 0) {
+
+    if (result.affectedRows === 0) {
       return NextResponse.json(
-        { success: false, error: 'Akun ini sudah terdaftar' },
-        { status: 409 }
+        { success: false, error: 'Akun sosmed tidak ditemukan' },
+        { status: 404 }
       );
     }
 
-    // 5. Insert
-    await connection.query(
-      `INSERT INTO affiliate_social_media (affiliate_application_id, platform, link, verified, created_at, updated_at)
-       VALUES (?, ?, ?, 0, NOW(), NOW())`,
-      [application.id, platform, link]
-    );
-
-    return NextResponse.json({
-      success: true,
-      data: { platform, link, verified: false },
-    });
+    return NextResponse.json({ success: true });
 
   } catch (error: any) {
-    console.error('Sosmed POST error:', error);
+    console.error('Sosmed DELETE error:', error);
     return NextResponse.json(
       { success: false, error: error.message || 'Server error' },
       { status: 500 }
