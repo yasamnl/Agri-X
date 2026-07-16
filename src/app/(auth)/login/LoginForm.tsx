@@ -61,7 +61,12 @@ export default function LoginForm() {
       try {
         data = JSON.parse(rawResponse);
       } catch (parseError) {
-        throw new Error('Response bukan JSON valid.');
+        console.error('Login failed with invalid JSON response:', {
+          status: res.status,
+          statusText: res.statusText,
+          body: rawResponse,
+        });
+        throw new Error('Response bukan JSON valid. Silakan periksa server atau koneksi.');
       }
 
       if (!res.ok) {
