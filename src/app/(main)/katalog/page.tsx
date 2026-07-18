@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { Suspense, useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Search,
@@ -101,7 +101,7 @@ const sortOptions = [
 // MAIN COMPONENT
 // ============================================
 
-export default function KatalogPage() {
+function KatalogPageContent() {
   // ✅ Ambil referral code dari query string
   const searchParams = useSearchParams();
   const referralCode = searchParams.get("ref") || "";
@@ -711,5 +711,13 @@ export default function KatalogPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function KatalogPage() {
+  return (
+    <Suspense fallback={<div className="py-8 text-center text-text-secondary">Memuat katalog...</div>}>
+      <KatalogPageContent />
+    </Suspense>
   );
 }

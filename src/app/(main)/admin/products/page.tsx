@@ -30,6 +30,7 @@
     minOrder: number;
     status: string;
     category: string;
+    categoryName?: string;
     categoryId: number | null;
     imagePath: string | null;
     harvestDate: string | null;
@@ -49,6 +50,8 @@
     limit: number;
     total: number;
     totalPages: number;
+    hasPrev: boolean;
+    hasNext: boolean;
   }
 
   interface StatusCounts {

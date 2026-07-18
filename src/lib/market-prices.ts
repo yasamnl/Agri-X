@@ -14,7 +14,7 @@ export interface MarketPrice {
   market: string;
   lastUpdate: string;
   category: 'sayuran' | 'buah' | 'bumbu' | 'beras' | 'protein' | 'lainnya';
-  source: 'bps' | 'worldbank' | 'fao' | 'mock';
+  source: 'bps' | 'worldbank' | 'fao' | 'siskaperbapo' | 'mock';
 }
 
 export interface PriceHistory {
@@ -83,7 +83,92 @@ const BASE_PRICES_ID: Array<{
 ];
 
 // ============================================
-// SOURCE 1: BPS WebAPI (Indonesia) 🇮🇩
+// SOURCE 1: SISKAPERBAPO (Jawa Timur, realtime) 🇮🇩
+// ============================================
+async function fetchFromSiskaperbapo(): Promise<MarketPrice[] | null> {
+  const today = new Date();
+  const tanggal = today.toISOString().slice(0, 10);
+
+  const commodityTargets = [
+    { id: 4, fallbackName: 'Beras Medium' },
+    { id: 7, fallbackName: 'Minyak Goreng Curah' },
+    { id: 10, fallbackName: 'Cabai Rawit' },
+    { id: 12, fallbackName: 'Daging Sapi' },
+    { id: 13, fallbackName: 'Telur Ayam' },
+    { id: 14, fallbackName: 'Ayam Potong' },
+  ];
+
+  try {
+    const results = await Promise.allSettled(
+      commodityTargets.map(async ({ id, fallbackName }) => {
+        const response = await fetch(
+          `https://siskaperbapo.jatimprov.go.id/home2/getDataMap/?tanggal=${tanggal}&komoditas=${id}`,
+          {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'Mozilla/5.0',
+              'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8',
+            },
+            next: { revalidate: 60 },
+          }
+        );
+
+        if (!response.ok) return null;
+
+        const payload = await response.json();
+        const averagePrice = Number(payload?.avg || 0);
+        if (!averagePrice || !Number.isFinite(averagePrice) || averagePrice <= 0) {
+          return null;
+        }
+
+        const commodityName = String(payload?.komoditas_nama || fallbackName)
+          .replace(/\/\s*kg/gi, '')
+          .replace(/\/\s*liter/gi, '')
+          .trim();
+
+        const unit = String(payload?.komoditas_nama || '')
+          .toLowerCase()
+          .includes('liter')
+          ? 'liter'
+          : 'kg';
+
+        const historyRows = Array.isArray(payload?.komoditas_harian?.rows) ? payload.komoditas_harian.rows : [];
+        const lastValue = historyRows.length > 0 ? Number(historyRows[historyRows.length - 1]?.c?.[1]?.v || 0) : 0;
+        const previousValue = historyRows.length > 1 ? Number(historyRows[historyRows.length - 2]?.c?.[1]?.v || 0) : 0;
+        const change = previousValue > 0 ? parseFloat((((lastValue - previousValue) / previousValue) * 100).toFixed(2)) : 0;
+
+        return {
+          id: `siskaperbapo-${id}`,
+          commodity: commodityName || fallbackName,
+          price: Math.round(averagePrice),
+          unit,
+          change,
+          trend: change > 0.5 ? 'up' as const : change < -0.5 ? 'down' as const : 'stable' as const,
+          market: 'Pasar Jawa Timur',
+          lastUpdate: payload?.tgl || payload?.tanggal || new Date().toISOString(),
+          category: categorizeCommodity(commodityName || fallbackName),
+          source: 'siskaperbapo' as const,
+        } satisfies MarketPrice;
+      })
+    );
+
+    const prices: MarketPrice[] = results.flatMap((result) => {
+      if (result.status !== 'fulfilled' || !result.value) {
+        return [];
+      }
+
+      return [result.value as MarketPrice];
+    });
+
+    return prices.length > 0 ? prices : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+// ============================================
+// SOURCE 2: BPS WebAPI (Indonesia) 🇮🇩
 // ============================================
 async function fetchFromBPS(): Promise<MarketPrice[] | null> {
   const apiKey = process.env.BPS_API_KEY;
@@ -136,7 +221,7 @@ async function fetchFromBPS(): Promise<MarketPrice[] | null> {
 }
 
 // ============================================
-// SOURCE 2: World Bank API (Global) 🌍
+// SOURCE 3: World Bank API (Global) 🌍
 // ✅ FIXED: Gunakan sebagai indikator tren, bukan multiplier
 // ============================================
 async function fetchFromWorldBank(): Promise<MarketPrice[] | null> {
@@ -174,7 +259,7 @@ async function fetchFromWorldBank(): Promise<MarketPrice[] | null> {
 }
 
 // ============================================
-// SOURCE 3: FAO FPMA API (Global) 🌾
+// SOURCE 4: FAO FPMA API (Global) 🌾
 // ============================================
 async function fetchFromFAO(): Promise<MarketPrice[] | null> {
   try {
@@ -303,8 +388,13 @@ export async function getMarketPrices(): Promise<{
   }
 
   // ✅ Try sources in order
-  let prices = await fetchFromBPS();
-  let source = 'bps';
+  let prices = await fetchFromSiskaperbapo();
+  let source = 'siskaperbapo';
+
+  if (!prices || prices.length === 0) {
+    prices = await fetchFromBPS();
+    source = 'bps';
+  }
 
   if (!prices || prices.length === 0) {
     prices = await fetchFromWorldBank();
@@ -437,6 +527,7 @@ export function getSourceBadge(source: string): { label: string; color: string }
     bps: { label: 'BPS Indonesia', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
     worldbank: { label: 'World Bank', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' },
     fao: { label: 'FAO UN', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' },
+    siskaperbapo: { label: 'SISKAPERBAPO', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' },
     mock: { label: 'Data Pasar', color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
   };
   return badges[source] || badges.mock;

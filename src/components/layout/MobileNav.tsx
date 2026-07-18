@@ -2,12 +2,13 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Home, Sprout, MessageSquare, Heart, User, ShoppingCart } from 'lucide-react';
+import { Home, Sprout, MessageSquare, Heart, User, ShoppingCart, TrendingUp } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 const navItems = [
   { href: '/', icon: Home, label: 'Home', page: 'home' },
   { href: '/katalog', icon: Sprout, label: 'Katalog', page: 'catalog' },
+  { href: '/rekomendasi', icon: TrendingUp, label: 'Rekom', page: 'recommendations' },
   { href: '/forum', icon: MessageSquare, label: 'Forum', page: 'forum' },
   { href: '/cart', icon: ShoppingCart, label: 'Cart', page: 'cart' },
   { href: '/akun', icon: User, label: 'Akun', page: 'account' },

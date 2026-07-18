@@ -15,12 +15,15 @@ import {
   Home,
   Sprout,
   MessageCircle,
-  User} from 'lucide-react';
+  User,
+  TrendingUp,
+} from 'lucide-react';
 import { NotificationPopup, type Notification } from './NotificationPopup';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/katalog', label: 'Katalog', icon: Sprout },
+  { href: '/rekomendasi', label: 'Rekomendasi', icon: TrendingUp },
   { href: '/forum', label: 'Forum', icon: MessageCircle },
   { href: '/akun', label: 'Akun', icon: User },
 ];
