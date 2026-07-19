@@ -17,6 +17,7 @@ import {
   Ban,
   Search,
   Eye,
+  Receipt,
   SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
@@ -488,13 +489,22 @@ export default function PenggunaAffiliatePage() {
                           {getStatusBadge(u.status)}
                         </td>
                         <td className="py-3 px-4">
-                          <button
-                            onClick={() => openDetailModal(u)}
-                            className="p-2 hover:bg-surface-hover rounded-lg transition-colors text-text-secondary hover:text-primary"
-                            title="Lihat detail"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => openDetailModal(u)}
+                              className="p-2 hover:bg-surface-hover rounded-lg transition-colors text-text-secondary hover:text-primary"
+                              title="Lihat detail"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <Link
+                              href={`/admin/affiliates/${u.id}/komisi`}
+                              className="p-2 hover:bg-surface-hover rounded-lg transition-colors text-text-secondary hover:text-primary"
+                              title="Report komisi"
+                            >
+                              <Receipt className="w-4 h-4" />
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -601,11 +611,20 @@ export default function PenggunaAffiliatePage() {
                 </div>
               </div>
 
-              <div>
-                <p className="text-xs text-text-secondary mb-1">Total Komisi</p>
-                <p className="text-lg font-bold text-green-500">
-                  {formatCurrency(selectedUser.totalCommission)}
-                </p>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs text-text-secondary mb-1">Total Komisi</p>
+                  <p className="text-lg font-bold text-green-500">
+                    {formatCurrency(selectedUser.totalCommission)}
+                  </p>
+                </div>
+                <Link
+                  href={`/admin/affiliates/${selectedUser.id}/komisi`}
+                  className="btn-outline flex items-center gap-2 text-sm whitespace-nowrap"
+                >
+                  <Receipt className="w-4 h-4" />
+                  Lihat Report
+                </Link>
               </div>
 
               <div>
