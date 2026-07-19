@@ -383,45 +383,7 @@ export default function AffiliateDashboardPage() {
     if (pollingIntervalRef.current) return;
 
     console.log("🔄 Starting polling...");
-
-    pollingIntervalRef.current = setInterval(async () => {
-      try {
-        const token = getCookie("accessToken");
-        if (!token) return;
-
-        const res = await fetch("/api/affiliate/dashboard", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const result = await res.json();
-        if (!result.success) return;
-
-        const freshSosmedList: SosmedAccount[] = result.data.sosmedList || [];
-
-        // Bandingkan dengan data lama (pakai ref, bukan state, biar tidak stale)
-        const oldList = sosmedListRef.current;
-        const nowVerified = freshSosmedList.find((freshItem) => {
-          const oldItem = oldList.find((o) => o.platform === freshItem.platform);
-          return oldItem && !oldItem.verified && freshItem.verified;
-        });
-        if (nowVerified) {
-          toast.success(`Akun ${nowVerified.platform} berhasil diverifikasi!`);
-        }
-
-        // Selalu sinkronkan list terbaru (termasuk token_sent dari server jika ada)
-        setSosmedList(freshSosmedList);
-        sosmedListRef.current = freshSosmedList;
-
-        // Kalau sudah tidak ada yang pending, hentikan polling
-        const stillPending = freshSosmedList.some((a) => a.token_sent && !a.verified);
-        if (!stillPending && pollingIntervalRef.current) {
-          clearInterval(pollingIntervalRef.current);
-          pollingIntervalRef.current = null;
-        }
-      } catch (err) {
-        console.error("Polling error:", err);
-      }
-    }, 5000); // cek tiap 5 detik
-  }, []);
+  }, [fetchDashboard]);
 
   // ─── EFEK UNTUK MEMULAI POLLING SAAT ADA PENDING ──────────────────
   useEffect(() => {
