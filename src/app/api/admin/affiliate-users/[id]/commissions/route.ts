@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
 // GET /api/admin/affiliate-users/[id]/commissions
 // [id] = user_id (sama seperti field `id` pada AffiliateUser di halaman list)
 export async function GET(
@@ -61,7 +65,7 @@ export async function GET(
     // Data transaksi (halaman berjalan)
     const [txRows] = await pool.query(
       `SELECT rt.id, rt.product_name, rt.nominal_transaksi, rt.komisi,
-              rt.persen_komisi, rt.status, rt.catatan, rt.created_at
+              rt.persen_komisi, rt.status, rt.created_at
        FROM referral_transactions rt
        WHERE ${whereClause}
        ORDER BY rt.created_at DESC
@@ -91,7 +95,7 @@ export async function GET(
       komisi: parseFloat(row.komisi) || 0,
       persenKomisi: row.persen_komisi,
       status: row.status as 'pending' | 'completed' | 'cancelled',
-      catatan: row.catatan,
+      // catatan: row.catatan,
       createdAt: row.created_at,
     }));
 
@@ -123,6 +127,8 @@ export async function GET(
           limit,
         },
       },
+    }, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' },
     });
   } catch (error: any) {
     console.error(

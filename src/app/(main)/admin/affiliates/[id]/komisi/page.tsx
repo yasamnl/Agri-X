@@ -255,7 +255,7 @@ export default function AffiliateKomisiPage() {
 
       const res = await fetch(
         `/api/admin/affiliate-users/${affiliateUserId}/commissions?${params.toString()}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
       );
       const result = await res.json();
       if (!result.success) throw new Error(result.error || "Gagal memuat data");
@@ -304,7 +304,7 @@ export default function AffiliateKomisiPage() {
 
       const res = await fetch(
         `/api/admin/affiliate-users/${affiliateUserId}/withdrawals?${params.toString()}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
       );
       const result = await res.json();
       if (!result.success) throw new Error(result.error || "Gagal memuat data");
