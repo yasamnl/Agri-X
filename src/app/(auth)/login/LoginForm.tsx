@@ -61,7 +61,12 @@ export default function LoginForm() {
       try {
         data = JSON.parse(rawResponse);
       } catch (parseError) {
-        throw new Error('Response bukan JSON valid.');
+        console.error('Login failed with invalid JSON response:', {
+          status: res.status,
+          statusText: res.statusText,
+          body: rawResponse,
+        });
+        throw new Error('Response bukan JSON valid. Silakan periksa server atau koneksi.');
       }
 
       if (!res.ok) {
@@ -94,7 +99,13 @@ export default function LoginForm() {
 
       // Update Context Auth
       login(token, userData); 
-      
+
+      // Redirect admin users directly to admin dashboard
+      if (userData.role === 'admin') {
+        router.push('/admin');
+        return;
+      }
+
       // ✅ REDIRECT KE CALLBACK URL
       if (callbackUrl && callbackUrl.startsWith('/') && !callbackUrl.startsWith('//')) {
         setTimeout(() => {

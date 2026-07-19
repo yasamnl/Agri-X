@@ -30,19 +30,17 @@
     minOrder: number;
     status: string;
     category: string;
+    categoryName?: string;
     categoryId: number | null;
-    categoryName: string;
     imagePath: string | null;
     harvestDate: string | null;
-    seller: {
-      id: number;
-      name: string;
-      email: string;
-    };
-    stats: {
-      completedOrders: number;
-      totalRevenue: number;
-    };
+    sellerId: number;
+    sellerName: string | null;
+    sellerEmail: string | null;
+    avgRating: number;
+    reviewCount: number;
+    poQuota: number | null;
+    poSold: number;
     createdAt: string;
     updatedAt: string;
   }
@@ -52,13 +50,12 @@
     limit: number;
     total: number;
     totalPages: number;
-    hasNext: boolean;
     hasPrev: boolean;
+    hasNext: boolean;
   }
 
   interface StatusCounts {
     all: number;
-    pending: number;
     ready_stock: number;
     pre_order: number;
     sold_out: number;
@@ -479,17 +476,17 @@
                                 {product.soldCount}
                               </p>
                               <p className="text-xs text-text-secondary">
-                                {product.stats.completedOrders} order
+                                Rating: {product.avgRating.toFixed(1)} ⭐ ({product.reviewCount})
                               </p>
                             </td>
 
                             {/* Seller */}
                             <td className="py-3 px-4">
                               <p className="font-medium text-text-primary truncate max-w-[150px]">
-                                {product.seller.name || '-'}
+                                {product.sellerName || '-'}
                               </p>
                               <p className="text-xs text-text-secondary truncate max-w-[150px]">
-                                {product.seller.email}
+                                {product.sellerEmail || '-'}
                               </p>
                             </td>
 
@@ -596,7 +593,7 @@
                           <div className="bg-background rounded-lg p-2">
                             <p className="text-xs text-text-secondary">Seller</p>
                             <p className="font-semibold text-text-primary text-xs truncate">
-                              {product.seller.name || '-'}
+                              {product.sellerName || '-'}
                             </p>
                           </div>
                         </div>
@@ -750,9 +747,9 @@
                   <div className="bg-surface rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <TrendingUp className="w-4 h-4 text-primary" />
-                      <p className="text-xs text-text-secondary">Order Selesai</p>
+                      <p className="text-xs text-text-secondary">Rating</p>
                     </div>
-                    <p className="text-2xl font-bold text-text-primary">{selectedProduct.stats.completedOrders}</p>
+                    <p className="text-2xl font-bold text-text-primary">{selectedProduct.avgRating.toFixed(1)} ⭐</p>
                   </div>
                   <div className="bg-surface rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-2">
@@ -774,15 +771,15 @@
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <p className="text-xs text-text-secondary">Nama</p>
-                      <p className="font-medium text-text-primary">{selectedProduct.seller.name || '-'}</p>
+                      <p className="font-medium text-text-primary">{selectedProduct.sellerName || '-'}</p>
                     </div>
                     <div>
                       <p className="text-xs text-text-secondary">Email</p>
-                      <p className="font-medium text-text-primary">{selectedProduct.seller.email || '-'}</p>
+                      <p className="font-medium text-text-primary">{selectedProduct.sellerEmail || '-'}</p>
                     </div>
                     <div>
                       <p className="text-xs text-text-secondary">ID Seller</p>
-                      <p className="font-medium text-text-primary">#{selectedProduct.seller.id}</p>
+                      <p className="font-medium text-text-primary">#{selectedProduct.sellerId}</p>
                     </div>
                   </div>
                 </div>

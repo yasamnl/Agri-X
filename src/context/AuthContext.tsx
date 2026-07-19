@@ -129,9 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => {
       setIsLoggingIn(false);
     }, 1000);
-    
-    router.push('/');
-  }, [router]);
+  }, []);
 
   // ============================================
   // LOGOUT

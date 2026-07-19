@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
@@ -49,7 +49,7 @@ function StatusBadge({ status, type }: { status: string; type: 'transaksi' | 'pe
   return <span className={`riwayat-status ${info.cls}`}>{info.label}</span>;
 }
 
-export default function RiwayatPage() {
+function RiwayatPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -220,5 +220,13 @@ export default function RiwayatPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function RiwayatPage() {
+  return (
+    <Suspense fallback={<div className="page-wrap text-center text-text-secondary">Memuat riwayat...</div>}>
+      <RiwayatPageContent />
+    </Suspense>
   );
 }

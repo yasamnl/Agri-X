@@ -5,12 +5,12 @@ import mysql from 'mysql2/promise';
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
+  user: process.env.DB_USERNAME || process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'ecommerce_db',
+  database: process.env.DB_DATABASE || process.env.DB_NAME || '',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
 });
 
 // ============================================

@@ -72,38 +72,37 @@ export async function POST(req: NextRequest) {
       [user.id, refreshTokenHash, ip, userAgent, expiresAt]
     );
 
-    // Set cookies (HANYA accessToken di body, refreshToken HANYA di cookie HttpOnly)
-    const headers = new Headers();
+    const response = NextResponse.json(
+      {
+        success: true,
+        accessToken,
+        user: {
+          id: String(user.id),
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        },
+      },
+      { status: 200 }
+    );
 
-    headers.append('Set-Cookie', serialize('accessToken', accessToken, {
+    response.cookies.set('accessToken', accessToken, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 15 * 60,
       path: '/',
-    }));
+    });
 
-    headers.append('Set-Cookie', serialize('refreshToken', refreshToken, {
+    response.cookies.set('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60,
       path: '/api/auth/refresh',
-    }));
-
-    return new NextResponse(JSON.stringify({
-      success: true,
-      accessToken,
-      user: {
-        id: String(user.id),
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      }
-    }), {
-      status: 200,
-      headers,
     });
+
+    return response;
 
   } catch (err: any) {
     console.error('🔐 Login error:', err);

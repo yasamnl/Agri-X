@@ -1,7 +1,7 @@
 // src/app/api/seller/products/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken } from '@/lib/auth';
-import pool from '@/lib/db';
+import db from '@/lib/db-adapter';
 
 export async function GET(req: NextRequest) {
   try {
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
       params.push(searchParam, searchParam);
     }
 
-    const [products] = await pool.query(
+    const [products] = await db.execute(
       `SELECT 
         p.id, p.name, p.description, p.price, p.unit, p.stock,
         p.min_order, p.sold_count, p.category, p.category_id,
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
       [...params, limit, offset]
     );
 
-    const [countResult] = await pool.query(
+    const [countResult] = await db.execute(
       `SELECT COUNT(DISTINCT p.id) as total
        FROM products p
        ${whereClause}`,
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
 
     const total = Number((countResult as any[])[0]?.total || 0);
 
-    const [statusCounts] = await pool.query(
+    const [statusCounts] = await db.execute(
       `SELECT status, COUNT(*) as count
        FROM products
        WHERE seller_id = ? AND status != 'deleted'
