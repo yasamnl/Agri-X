@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminStatsCard } from '@/components/admin/AdminStatsCard';
 import { AdminModal } from '@/components/admin/AdminModal';
+import { AdminPriceChart } from '@/components/admin/AdminPriceChart';
 import { getCookie } from '@/lib/auth';
 import { 
   Users, Package, ShoppingCart, AlertTriangle, 
@@ -298,6 +299,9 @@ export default function AdminDashboardPage() {
               </button>
             </div>
           </div>
+
+          {/* Price Chart */}
+          <AdminPriceChart />
 
           {/* Recent Activities */}
           <div className="card">
