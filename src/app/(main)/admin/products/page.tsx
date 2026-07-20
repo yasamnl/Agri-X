@@ -122,7 +122,22 @@
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [showActionModal, setShowActionModal] = useState(false);
+    const [showAddModal, setShowAddModal] = useState(false);
     const [actionType, setActionType] = useState<'approve' | 'reject' | 'delete'>('approve');
+    const [newProduct, setNewProduct] = useState({
+      name: '',
+      description: '',
+      price: '',
+      unit: 'kg',
+      stock: '',
+      minOrder: '1',
+      category: 'lainnya',
+      sellerId: '',
+      imagePath: '',
+      harvestDate: '',
+      status: 'ready_stock',
+    });
+    const [isCreating, setIsCreating] = useState(false);
     const [actionNote, setActionNote] = useState('');
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -258,6 +273,65 @@
       }
     };
 
+    const handleCreateProduct = async () => {
+      if (!newProduct.name.trim() || !newProduct.price || !newProduct.sellerId) {
+        toast.error('Nama produk, harga, dan seller wajib diisi');
+        return;
+      }
+
+      try {
+        setIsCreating(true);
+        const token = getCookie('accessToken');
+        if (!token) throw new Error('Token tidak ditemukan');
+
+        const res = await fetch('/api/admin/products', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: newProduct.name.trim(),
+            description: newProduct.description.trim(),
+            price: Number(newProduct.price),
+            unit: newProduct.unit,
+            stock: Number(newProduct.stock || 0),
+            minOrder: Number(newProduct.minOrder || 1),
+            category: newProduct.category,
+            sellerId: Number(newProduct.sellerId),
+            imagePath: newProduct.imagePath || null,
+            harvestDate: newProduct.harvestDate || null,
+            status: newProduct.status,
+          }),
+        });
+
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Gagal menambah produk');
+
+        toast.success('Produk berhasil ditambahkan');
+        setShowAddModal(false);
+        setNewProduct({
+          name: '',
+          description: '',
+          price: '',
+          unit: 'kg',
+          stock: '',
+          minOrder: '1',
+          category: 'lainnya',
+          sellerId: '',
+          imagePath: '',
+          harvestDate: '',
+          status: 'ready_stock',
+        });
+        fetchProducts(true);
+      } catch (error: any) {
+        console.error('Create product error:', error);
+        toast.error(error.message || 'Gagal menambah produk');
+      } finally {
+        setIsCreating(false);
+      }
+    };
+
     // ✅ Open action modal
     const openActionModal = (type: 'approve' | 'reject' | 'delete') => {
       setActionType(type);
@@ -324,14 +398,23 @@
                   {pagination?.total || 0} produk terdaftar
                 </p>
               </div>
-              <button
-                onClick={() => fetchProducts(true)}
-                disabled={isRefreshing}
-                className="btn-outline flex items-center gap-2 self-start"
-              >
-                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                Refresh
-              </button>
+              <div className="flex items-center gap-2 self-start">
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  <Package className="w-4 h-4" />
+                  Tambah Produk
+                </button>
+                <button
+                  onClick={() => fetchProducts(true)}
+                  disabled={isRefreshing}
+                  className="btn-outline flex items-center gap-2"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  Refresh
+                </button>
+              </div>
             </div>
 
             {/* Status Counts Cards */}
@@ -669,6 +752,85 @@
             </div>
           </div>
         </main>
+
+        {/* Add Product Modal */}
+        {showAddModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-background rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-background border-b border-border p-6 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-text-primary">Tambah Produk Baru</h2>
+                <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-surface rounded-lg transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">Nama Produk</label>
+                    <input value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} className="input" placeholder="Contoh: Tomat Premium" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">Harga</label>
+                    <input type="number" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} className="input" placeholder="15000" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">Satuan</label>
+                    <input value={newProduct.unit} onChange={(e) => setNewProduct({ ...newProduct, unit: e.target.value })} className="input" placeholder="kg" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">Stok</label>
+                    <input type="number" value={newProduct.stock} onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })} className="input" placeholder="100" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">Min Order</label>
+                    <input type="number" value={newProduct.minOrder} onChange={(e) => setNewProduct({ ...newProduct, minOrder: e.target.value })} className="input" placeholder="1" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">Seller ID</label>
+                    <input type="number" value={newProduct.sellerId} onChange={(e) => setNewProduct({ ...newProduct, sellerId: e.target.value })} className="input" placeholder="1" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">Kategori</label>
+                    <input value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })} className="input" placeholder="lainnya" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">Status</label>
+                    <select value={newProduct.status} onChange={(e) => setNewProduct({ ...newProduct, status: e.target.value })} className="input">
+                      <option value="ready_stock">Ready Stock</option>
+                      <option value="pre-order">Pre-Order</option>
+                      <option value="sold_out">Sold Out</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Deskripsi</label>
+                  <textarea value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} className="input min-h-[100px]" placeholder="Deskripsi produk..." />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">URL Gambar</label>
+                    <input value={newProduct.imagePath} onChange={(e) => setNewProduct({ ...newProduct, imagePath: e.target.value })} className="input" placeholder="https://..." />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">Tanggal Panen</label>
+                    <input type="date" value={newProduct.harvestDate} onChange={(e) => setNewProduct({ ...newProduct, harvestDate: e.target.value })} className="input" />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button onClick={() => setShowAddModal(false)} className="btn-outline flex-1">Batal</button>
+                  <button onClick={handleCreateProduct} disabled={isCreating} className="btn-primary flex-1 flex items-center justify-center gap-2">
+                    {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Package className="w-4 h-4" />}
+                    {isCreating ? 'Menyimpan...' : 'Simpan Produk'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Detail Modal */}
         {showDetailModal && selectedProduct && (

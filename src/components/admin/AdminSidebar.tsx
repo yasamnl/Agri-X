@@ -41,10 +41,10 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
       <aside 
         data-sidebar
         className={`
-          fixed top-0 left-0 h-full bg-surface border-r border-border z-50
+          fixed top-0 left-0 h-full bg-surface border-r border-border z-10
           transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0 lg:static lg:w-64
+          lg:translate-x-0 lg:fixed lg:top-0 lg:h-screen lg:w-64
         `}
       >
         {/* Header */}

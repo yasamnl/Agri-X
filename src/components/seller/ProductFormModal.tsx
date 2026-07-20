@@ -176,8 +176,16 @@ export function ProductFormModal({
         body: formData,
       });
 
-      const result = await res.json();
-      if (!result.success) throw new Error(result.error || 'Gagal menyimpan produk');
+      let result: any = null;
+      try {
+        result = await res.json();
+      } catch {
+        result = null;
+      }
+
+      if (!res.ok || !result?.success) {
+        throw new Error(result?.error || `Gagal menyimpan produk (${res.status})`);
+      }
 
       toast.success(isEditMode ? 'Produk berhasil diupdate!' : 'Produk berhasil ditambahkan!');
       onSuccess();

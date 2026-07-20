@@ -3,6 +3,77 @@ import db from '@/lib/db-adapter';
 import { verifyAccessToken } from '@/utils/jwt.util';
 import { handleAPIError } from '@/lib/middleware';
 
+export async function POST(req: NextRequest) {
+  try {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = verifyAccessToken(token);
+    if (!decoded || decoded.role !== 'admin') {
+      return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const {
+      name,
+      description = '',
+      price,
+      unit = 'kg',
+      stock = 0,
+      minOrder = 1,
+      category = 'lainnya',
+      categoryId = null,
+      sellerId,
+      imagePath = null,
+      harvestDate = null,
+      status = 'ready_stock',
+    } = body || {};
+
+    if (!name || !price) {
+      return NextResponse.json({ success: false, error: 'Nama produk dan harga wajib diisi' }, { status: 400 });
+    }
+
+    if (!sellerId) {
+      return NextResponse.json({ success: false, error: 'Seller wajib dipilih' }, { status: 400 });
+    }
+
+    const insertResult = await db.execute(
+      `INSERT INTO products (
+        name, description, price, unit, stock, min_order, sold_count, category, category_id,
+        status, harvest_date, image_path, seller_id, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [
+        name,
+        description,
+        Number(price),
+        unit,
+        Number(stock || 0),
+        Number(minOrder || 1),
+        category,
+        categoryId,
+        status,
+        harvestDate,
+        imagePath,
+        Number(sellerId),
+      ]
+    );
+
+    const insertId = (insertResult[0] as any).insertId || (insertResult[0] as any).lastInsertRowid || null;
+
+    return NextResponse.json({
+      success: true,
+      message: 'Produk berhasil ditambahkan',
+      data: { id: insertId },
+    });
+  } catch (error: any) {
+    console.error('❌ POST /api/admin/products error:', error);
+    return handleAPIError(error, 'POST /api/admin/products');
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     // ✅ Auth check - hanya admin yang bisa akses

@@ -12,9 +12,10 @@ import {
   ChevronLeft, ChevronRight, Loader2, FileText, User, MessageSquare,
   X, Menu, Flag,
   RotateCcw, Shield, Mail, Info,
-  BarChart3, Package, ShoppingCart, Star, Check, AlertTriangle
+  BarChart3, Package, ShoppingCart, Star, Check, AlertTriangle, TrendingUp, Printer
 } from 'lucide-react';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { AdminPriceChart } from '@/components/admin/AdminPriceChart';
 import { FaPaperPlane } from 'react-icons/fa';
 
 // ============================================================================
@@ -287,6 +288,8 @@ export default function AdminReportsPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [statusCounts, setStatusCounts] = useState<StatusCounts | null>(null);
   const [typeCounts, setTypeCounts] = useState<TypeCounts | null>(null);
+  const [summaryStats, setSummaryStats] = useState<{ totalUsers: number; totalProducts: number; totalTransactions: number; totalRevenue: number; pendingReports: number; pendingProducts: number } | null>(null);
+  const [marketSummary, setMarketSummary] = useState<{ totalCommodity: number; totalUpdates: number } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -313,9 +316,39 @@ export default function AdminReportsPage() {
   // Fetch data
   useEffect(() => {
     if (isAuthenticated && user?.role === 'admin') {
+      fetchSummaryMetrics();
       fetchReports();
     }
   }, [isAuthenticated, user, currentPage, statusFilter, typeFilter, searchQuery]);
+
+  const fetchSummaryMetrics = async () => {
+    try {
+      const token = getCookie('accessToken');
+
+      const [statsRes, pricesRes] = await Promise.all([
+        fetch('/api/admin/stats', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch('/api/market-prices'),
+      ]);
+
+      const statsResult = await statsRes.json();
+      const pricesResult = await pricesRes.json();
+
+      if (statsResult.success) {
+        setSummaryStats(statsResult.data?.stats || null);
+      }
+
+      if (pricesResult.success) {
+        setMarketSummary({
+          totalCommodity: Array.isArray(pricesResult.data) ? pricesResult.data.length : 0,
+          totalUpdates: Array.isArray(pricesResult.data) ? pricesResult.data.length : 0,
+        });
+      }
+    } catch (error) {
+      console.error('Fetch summary metrics error:', error);
+    }
+  };
 
   const fetchReports = async () => {
     try {
@@ -413,6 +446,104 @@ export default function AdminReportsPage() {
     return searchQuery !== '' || statusFilter !== 'all' || typeFilter !== 'all';
   };
 
+  const handlePrintReport = () => {
+    const printWindow = window.open('', '_blank', 'width=1200,height=900');
+
+    if (!printWindow) {
+      toast.error('Popup diblokir. Izinkan popup untuk mencetak laporan.');
+      return;
+    }
+
+    const statusLabel = (status: string) => {
+      const map: Record<string, string> = {
+        menunggu: 'Menunggu',
+        ditinjau: 'Ditinjau',
+        selesai: 'Selesai',
+        ditolak: 'Ditolak',
+      };
+      return map[status] || status;
+    };
+
+    const typeLabel = (type: string) => getTypeLabel(type);
+
+    const rows = reports.length > 0
+      ? reports.map((report) => `
+          <tr>
+            <td>#${report.id}</td>
+            <td>${(report.reporter.name || '-').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
+            <td>${typeLabel(report.reportedType)}</td>
+            <td>${(report.reason || '-').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
+            <td>${statusLabel(report.statusLaporan)}</td>
+            <td>${format(new Date(report.tanggalLaporan), 'dd MMM yyyy HH:mm', { locale: id })}</td>
+            <td>${(report.description || '-').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
+          </tr>
+        `).join('')
+      : '<tr><td colspan="7" style="text-align:center;">Tidak ada data laporan</td></tr>';
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="id">
+      <head>
+        <meta charset="UTF-8" />
+        <title>Laporan Admin - Agri-X</title>
+        <style>
+          body { font-family: Arial, sans-serif; color: #111827; margin: 24px; }
+          h1 { margin-bottom: 8px; font-size: 24px; }
+          .meta { color: #6b7280; margin-bottom: 20px; }
+          .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 24px; }
+          .card { border: 1px solid #d1d5db; border-radius: 8px; padding: 12px; background: #f9fafb; }
+          .card strong { display: block; font-size: 20px; margin-bottom: 4px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+          th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; font-size: 12px; }
+          th { background: #f3f4f6; }
+          .footer { margin-top: 24px; color: #6b7280; font-size: 12px; }
+          @media print { body { margin: 0; } }
+        </style>
+      </head>
+      <body>
+        <h1>Laporan Admin Agri-X</h1>
+        <div class="meta">Dicetak: ${format(new Date(), 'dd MMM yyyy, HH:mm', { locale: id })}</div>
+        <div class="summary-grid">
+          <div class="card"><strong>${totalItems}</strong>Total Laporan</div>
+          <div class="card"><strong>${statusCounts?.menunggu || 0}</strong>Menunggu</div>
+          <div class="card"><strong>${statusCounts?.ditinjau || 0}</strong>Ditinjau</div>
+          <div class="card"><strong>${statusCounts?.selesai || 0}</strong>Selesai</div>
+          <div class="card"><strong>${statusCounts?.ditolak || 0}</strong>Ditolak</div>
+          <div class="card"><strong>${summaryStats?.totalUsers || 0}</strong>Pengguna</div>
+        </div>
+
+        <h2 style="font-size: 16px; margin-bottom: 8px;">Daftar Laporan</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pelapor</th>
+              <th>Tipe</th>
+              <th>Kategori</th>
+              <th>Status</th>
+              <th>Tanggal</th>
+              <th>Deskripsi</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+
+        <div class="footer">
+          <p>Filter aktif: ${statusFilter !== 'all' ? `status=${statusFilter}` : 'Semua status'}${typeFilter !== 'all' ? `, tipe=${typeFilter}` : ''}${searchQuery ? `, pencarian=${searchQuery}` : ''}</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 300);
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -441,11 +572,72 @@ export default function AdminReportsPage() {
                 <p className="text-sm text-text-secondary">{totalItems} laporan terdaftar</p>
               </div>
             </div>
+
+            <button
+              onClick={handlePrintReport}
+              className="btn-primary flex items-center gap-2"
+            >
+              <Printer className="w-4 h-4" />
+              Cetak Laporan
+            </button>
           </div>
         </header>
 
         {/* Content */}
         <div className="p-4 lg:p-8 space-y-6">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="card">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm text-text-secondary">Total Komoditas</p>
+                  <p className="text-2xl font-bold text-text-primary">{marketSummary?.totalCommodity || 0}</p>
+                </div>
+                <div className="p-2 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400">
+                  <Package className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm text-text-secondary">Total Update Harga</p>
+                  <p className="text-2xl font-bold text-text-primary">{marketSummary?.totalUpdates || 0}</p>
+                </div>
+                <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm text-text-secondary">Total Pengguna</p>
+                  <p className="text-2xl font-bold text-text-primary">{summaryStats?.totalUsers || 0}</p>
+                </div>
+                <div className="p-2 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                  <User className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm text-text-secondary">Laporan Menunggu</p>
+                  <p className="text-2xl font-bold text-text-primary">{summaryStats?.pendingReports || statusCounts?.menunggu || 0}</p>
+                </div>
+                <div className="p-2 rounded-lg bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <AdminPriceChart />
+
           {/* Status Counts */}
           {statusCounts && (
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
